@@ -3675,7 +3675,10 @@ function loadUserProgress(uid) {
   try { return JSON.parse(localStorage.getItem('missionJP_progress_'+uid) || 'null'); } catch(e){ return null; }
 }
 function saveUserProgress(uid, data) {
-  try { localStorage.setItem('missionJP_progress_'+uid, JSON.stringify(data)); } catch(e){}
+  try {
+    if(data === null) localStorage.removeItem('missionJP_progress_'+uid);
+    else localStorage.setItem('missionJP_progress_'+uid, JSON.stringify(data));
+  } catch(e){}
 }
 
 // ── Current user state ────────────────────────
@@ -3687,8 +3690,11 @@ function getWeekStartDate() {
   return d.toDateString();
 }
 
+const DATA_VERSION = 'v2'; // 버전 변경 시 모든 기기 로컬 데이터 자동 초기화
+
 function buildProgressSnapshot() {
   return {
+    dataVersion: DATA_VERSION,
     streak:S.streak, lastStreakDate:S.lastStreakDate, xp:S.xp, hearts:S.hearts, maxHearts:S.maxHearts,
     todayXP:S.todayXP, dailyGoal:S.dailyGoal,
     weekDone:S.weekDone,
@@ -3797,7 +3803,12 @@ function doLogin() {
 function loginAs(uid, name) {
   CU = { uid, name };
   setCurrentSession(uid);
-  const saved = loadUserProgress(uid);
+  let saved = loadUserProgress(uid);
+  // 데이터 버전이 다르면 로컬 데이터 무시 → 초기화
+  if(saved && saved.dataVersion !== DATA_VERSION) {
+    saveUserProgress(uid, null);
+    saved = null;
+  }
   if(saved) {
     const savedDay = saved.savedAt ? new Date(saved.savedAt).toDateString() : '';
     const today    = new Date().toDateString();
