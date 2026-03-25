@@ -2,7 +2,7 @@
 <html lang="ko" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>메구미링고</title>
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#58CC02">
@@ -64,6 +64,7 @@ body{
 .bottom-nav{
   display:flex;border-top:1.5px solid var(--border);
   background:var(--bg);flex-shrink:0;
+  padding-bottom:env(safe-area-inset-bottom);
 }
 .nav-btn{
   flex:1;display:flex;flex-direction:column;align-items:center;
