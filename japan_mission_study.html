@@ -2064,7 +2064,7 @@ const S = {
   enabledCats:new Set(),
   lessonStars: {},  // lessonId → 0,1,2,3
   titles: new Set(),        // earned title strings
-  openedChests: new Set(),  // 'chest1'...'chest8' + 'chestExtra'
+  openedChests: new Set(),  // 'chest1'...'chest8' + 'chestFinal' + 'chestExtra' + 'chestExtra11'...'chestExtra15'
   pathChests: new Set(),    // 'pgem_1_0', 'pgem_1_1', ... (경로 미니 보석 상자)
   gems: 0,
   streakShield: false,
@@ -2185,7 +2185,12 @@ const UNITS = [
   { no:7, title:'심화 & 실전',        subtitle:'한 단계 더 올라가요!',        icon:'🎓', color:'#FFD900', dark:'#CCA800', lastDay:'day70',  chestId:'chest7',  chestTitle:'심화 마스터 🎓' },
   { no:8, title:'최종 준비',          subtitle:'선교 현장을 준비해요!',       icon:'🎯', color:'#FF6B9D', dark:'#CC4480', lastDay:'day79',  chestId:'chest8',  chestTitle:'최종 준비 완료 🎯' },
   { no:9, title:'전체 복습',          subtitle:'80일 대장정의 완성!',         icon:'🏆', color:'#FFD900', dark:'#CCA800', lastDay:'day80',  chestId:'chestFinal', chestTitle:'선교 완주자 🏆' },
-  { no:10, title:'일본어 찬양',       subtitle:'찬양으로 더 깊이!',          icon:'🎵', color:'#FF6B9D', dark:'#CC4480', lastDay:'extra05', chestId:'chestExtra', chestTitle:'찬양 마스터 🎵' },
+  { no:10, title:'일본어 찬양',       subtitle:'찬양으로 더 깊이!',          icon:'🎵', color:'#FF6B9D', dark:'#CC4480', lastDay:'extra05', chestId:'chestExtra',  chestTitle:'찬양 마스터 🎵' },
+  { no:11, title:'어린이 사역 기초', subtitle:'어린이와 소통해요!',          icon:'👶', color:'#1CB0F6', dark:'#0085C7', lastDay:'extra10', chestId:'chestExtra11', chestTitle:'어린이 사역자 👶' },
+  { no:12, title:'주방 동사',         subtitle:'주방에서 일본어로!',          icon:'🔪', color:'#FF9600', dark:'#CC7700', lastDay:'extra15', chestId:'chestExtra12', chestTitle:'주방 마스터 🔪' },
+  { no:13, title:'편의점 & 마트',     subtitle:'쇼핑도 일본어로!',            icon:'🏪', color:'#CE82FF', dark:'#9B59D0', lastDay:'extra20', chestId:'chestExtra13', chestTitle:'쇼핑 달인 🏪' },
+  { no:14, title:'취미와 최애',       subtitle:'관심사를 나눠요!',            icon:'🎤', color:'#FF4B4B', dark:'#CC0000', lastDay:'extra25', chestId:'chestExtra14', chestTitle:'취미 공유자 🎤' },
+  { no:15, title:'감정 공감',         subtitle:'마음을 연결해요!',            icon:'🥺', color:'#8CC63F', dark:'#5E8A2A', lastDay:'extra30', chestId:'chestExtra15', chestTitle:'공감 달인 🥺' },
 ];
 
 /* Map: unitNo → array of lesson IDs in order */
@@ -2349,7 +2354,8 @@ function openChest(chestId) {
   const GEM_REWARDS = {
     chest1:10, chest2:15, chest3:20, chest4:25,
     chest5:30, chest6:35, chest7:50, chest8:60,
-    chestFinal:100, chestExtra:75
+    chestFinal:100, chestExtra:75,
+    chestExtra11:50, chestExtra12:50, chestExtra13:50, chestExtra14:50, chestExtra15:50
   };
   const gemReward = GEM_REWARDS[chestId] || 20;
   S.openedChests.add(chestId);
@@ -2434,8 +2440,8 @@ function renderJourney() {
         const prevId = allIds[globalIdx - 1];
         unlocked = S.allCompleted.has(prevId);
       }
-      // Extra course: also requires day80 to be complete
-      if(unit.no === 10 && !S.allCompleted.has('day80')) unlocked = false;
+      // Extra courses: also requires day80 to be complete
+      if(unit.no >= 10 && !S.allCompleted.has('day80')) unlocked = false;
 
       const done    = S.allCompleted.has(lid);
       const current = unlocked && !done;
