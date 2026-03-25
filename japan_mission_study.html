@@ -4343,6 +4343,7 @@ function pushMyProgress() {
     enabledCats:        [...S.enabledCats],
     gems:               S.gems,
     streakShield:       S.streakShield,
+    hearts:             S.hearts,
     couponRevealed:     S.couponRevealed,
     lastHeartRefillDate:S.lastHeartRefillDate || '',
     maxHearts:          S.maxHearts,
@@ -4401,6 +4402,7 @@ function restoreFromFirebase() {
         : [false,false,false,false,false,false,false];
       S.weekStartDate = _curWeekStart;
       if(data.enabledCats   && data.enabledCats.length   > 0) S.enabledCats   = new Set(data.enabledCats);
+      if(data.hearts          !== undefined) S.hearts          = data.hearts;
       if(data.couponRevealed  !== undefined) S.couponRevealed  = data.couponRevealed;
       if(data.lastHeartRefillDate) S.lastHeartRefillDate = data.lastHeartRefillDate;
       if(data.maxHearts       !== undefined) S.maxHearts       = data.maxHearts;
