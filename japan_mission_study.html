@@ -4354,6 +4354,7 @@ function pushMyProgress() {
     sound:              S.sound,
     darkMode:           S.darkMode,
     qCount:             S.qCount,
+    dailyGoal:          S.dailyGoal,
     pw:                 (getAllUsers()[CU.uid] || {}).pw || '',
   });
 }
@@ -4417,6 +4418,7 @@ function restoreFromFirebase() {
         document.documentElement.setAttribute('data-theme', S.darkMode?'dark':'light');
       }
       if(data.qCount          !== undefined) S.qCount          = data.qCount;
+      if(data.dailyGoal       !== undefined) S.dailyGoal       = data.dailyGoal;
       if(data.pw) {
         const users = getAllUsers();
         if(users[CU.uid]) { users[CU.uid].pw = data.pw; saveAllUsers(users); }
