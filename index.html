@@ -52,6 +52,9 @@ body{
   position:sticky;top:0;z-index:10;
 }
 .topbar-logo{font-size:16px;font-weight:800;color:var(--green);letter-spacing:-0.5px;flex-shrink:0;}
+.mid-chest-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.65);align-items:center;justify-content:center;}
+.mid-chest-overlay.active{display:flex;}
+.mid-chest-box{background:var(--bg);border-radius:28px;padding:36px 28px 28px;text-align:center;max-width:300px;width:88%;box-shadow:0 12px 40px rgba(0,0,0,.3);animation:bounce .35s cubic-bezier(.34,1.56,.64,1);}
 .topbar-stats{display:flex;gap:5px;align-items:center;}
 .topbar-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
 .stat-chip{display:flex;align-items:center;gap:2px;font-size:12px;font-weight:700;}
@@ -2000,6 +2003,17 @@ body{
     <div class="mascot-msg-title" id="mascot-msg-title"></div>
     <div class="mascot-msg-body" id="mascot-msg-body"></div>
     <div class="mascot-tap-hint">탭해서 닫기</div>
+  </div>
+</div>
+
+<!-- MID CHEST OVERLAY -->
+<div class="mid-chest-overlay" id="mid-chest-overlay">
+  <div class="mid-chest-box">
+    <div style="font-size:56px;margin-bottom:8px;">💎</div>
+    <div style="font-size:20px;font-weight:900;color:var(--green);margin-bottom:6px;">보석 상자 발견!</div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:18px;">잠깐, 학습 중에 보석이 나타났어요!</div>
+    <div style="font-size:32px;font-weight:900;color:var(--green);margin-bottom:20px;">💎 <span id="mid-chest-gem-count">10</span>개</div>
+    <button onclick="collectMidChest()" style="width:100%;padding:14px;border-radius:14px;border:none;background:var(--green);color:#fff;font-size:16px;font-weight:900;cursor:pointer;">열기! ✨</button>
   </div>
 </div>
 
