@@ -1883,7 +1883,7 @@ const S = {
   quizHearts:5, answered:false, selectedAnswer:null,
 
   // Settings
-  notifEnabled:false, notifTime:'09:00',
+  notifEnabled:true, notifTime:'09:00',
   darkMode:false, sound:true,
   qCount:5,
   enabledCats:new Set(),
@@ -2941,6 +2941,27 @@ function getDaysLeft() {
   return Math.max(0, Math.ceil((dep - now) / 86400000));
 }
 
+/* ─── 로그인 시 알림 자동 활성화 ─── */
+async function autoEnableNotification() {
+  if(!('Notification' in window)) return;
+  // 이미 활성화되어 있으면 스케줄만 재등록
+  if(S.notifEnabled) { scheduleNotification(); return; }
+  // 이미 거부된 경우 강제 요청 안 함
+  if(Notification.permission === 'denied') return;
+  // 권한 요청 (granted 또는 default → 자동 활성화)
+  try {
+    const perm = await Notification.requestPermission();
+    if(perm === 'granted' || perm === 'default') {
+      S.notifEnabled = true;
+      persistProgress();
+      scheduleNotification();
+      // 토글 UI 반영
+      const t = document.getElementById('notif-toggle');
+      if(t) t.classList.add('on');
+    }
+  } catch(e) {}
+}
+
 /* ─── 알림 스케줄 (SW + setTimeout 이중) ─── */
 function scheduleNotification() {
   // 1) SW에 스케줄 전달 (앱 꺼져도 동작)
@@ -3380,7 +3401,7 @@ function applyProgressSnapshot(snap) {
   S.dailyGoal = snap.dailyGoal ?? 20;
   S.weekDone = snap.weekDone ?? [false,false,false,false,false,false,false];
   S.allCompleted = new Set(snap.allCompleted ?? []);
-  S.notifEnabled = snap.notifEnabled ?? false;
+  S.notifEnabled = snap.notifEnabled ?? true;
   S.notifTime = snap.notifTime ?? '09:00';
   S.darkMode = snap.darkMode ?? false;
   S.sound = snap.sound ?? true;
@@ -3469,7 +3490,7 @@ function loginAs(uid, name) {
     S.streak=0; S.lastStreakDate=''; S.xp=0; S.hearts=5; S.maxHearts=5;
     S.todayXP=0; S.dailyGoal=20;
     S.weekDone=[false,false,false,false,false,false,false];
-    S.allCompleted=new Set(); S.notifEnabled=false;
+    S.allCompleted=new Set(); S.notifEnabled=true;
     S.notifTime='09:00'; S.darkMode=false; S.sound=true;
     S.qCount=5;
     S.enabledCats=new Set(['greet','intro','faith','mission','lords','creed','gospel','praise']);
@@ -3479,7 +3500,8 @@ function loginAs(uid, name) {
   document.getElementById('screen-auth').classList.remove('active');
   initTTSVoice();
   goTo('home');
-  if(S.notifEnabled) scheduleNotification();   // 알림 켜져 있으면 재스케줄
+  // 알림 기본 활성화: 처음 로그인 시 자동 권한 요청 후 활성화
+  autoEnableNotification();
   checkMissedStudy();                          // 어제 미공부 확인
   // 웹 푸시 구독 등록 (찌르기 앱 푸시용)
   registerPushSubscription();
