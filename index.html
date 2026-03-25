@@ -176,6 +176,33 @@ body{
 .path-gem-icon{font-size:28px;line-height:1;}
 .path-gem-label{font-size:11px;font-weight:700;color:var(--text2);}
 @keyframes gemChestPulse{0%,100%{box-shadow:0 0 0 0 rgba(28,176,246,.4)}50%{box-shadow:0 0 0 8px rgba(28,176,246,0)}}
+/* Path Chest Opening Modal */
+.pgch-overlay{display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.72);align-items:center;justify-content:center;}
+.pgch-overlay.active{display:flex;}
+.pgch-box{background:var(--bg);border-radius:28px;padding:32px 28px 24px;text-align:center;width:88%;max-width:320px;animation:bounce .4s cubic-bezier(.34,1.56,.64,1);}
+.pgch-chest-wrap{font-size:88px;line-height:1;margin-bottom:8px;display:inline-block;}
+.pgch-chest-wrap.shake{animation:pgchShake .5s ease;}
+.pgch-chest-wrap.pop{animation:pgchPop .4s cubic-bezier(.34,1.56,.64,1);}
+@keyframes pgchShake{0%,100%{transform:rotate(0)}20%{transform:rotate(-15deg)}40%{transform:rotate(15deg)}60%{transform:rotate(-10deg)}80%{transform:rotate(10deg)}}
+@keyframes pgchPop{0%{transform:scale(1)}50%{transform:scale(1.35)}100%{transform:scale(1)}}
+.pgch-gems-row{display:flex;align-items:center;justify-content:center;gap:8px;font-size:32px;font-weight:900;color:#1CB0F6;min-height:44px;margin:8px 0;}
+.pgch-gems-row .pgch-gem-icon{font-size:36px;animation:gemSpin .6s ease;}
+@keyframes gemSpin{0%{transform:scale(0) rotate(-180deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+.pgch-gem-particles{display:flex;justify-content:center;gap:6px;min-height:28px;margin-bottom:4px;}
+.pgch-gem-particles span{font-size:20px;opacity:0;}
+.pgch-gem-particles.burst span{animation:gemFloat .7s ease forwards;}
+.pgch-gem-particles.burst span:nth-child(1){animation-delay:.0s;}
+.pgch-gem-particles.burst span:nth-child(2){animation-delay:.1s;}
+.pgch-gem-particles.burst span:nth-child(3){animation-delay:.2s;}
+.pgch-gem-particles.burst span:nth-child(4){animation-delay:.15s;}
+.pgch-gem-particles.burst span:nth-child(5){animation-delay:.05s;}
+@keyframes gemFloat{0%{opacity:0;transform:translateY(0) scale(.5)}60%{opacity:1;transform:translateY(-18px) scale(1.2)}100%{opacity:1;transform:translateY(-8px) scale(1)}}
+.pgch-title{font-size:20px;font-weight:900;color:var(--text);margin:4px 0 2px;}
+.pgch-sub{font-size:13px;color:var(--text2);margin-bottom:18px;}
+.pgch-btn{width:100%;padding:14px;border-radius:14px;border:none;font-size:16px;font-weight:800;cursor:pointer;transition:transform .1s;}
+.pgch-btn:active{transform:translateY(2px);}
+.pgch-btn.open{background:#1CB0F6;color:#fff;}
+.pgch-btn.claim{background:#58CC02;color:#fff;}
 
 /* Shop Modal */
 .shop-modal-overlay{
@@ -1943,6 +1970,20 @@ body{
   </div>
 </div>
 
+<!-- ══ 경로 보석 상자 오픈 모달 ══ -->
+<div class="pgch-overlay" id="pgch-overlay">
+  <div class="pgch-box">
+    <div class="pgch-chest-wrap" id="pgch-chest-icon">📦</div>
+    <div class="pgch-gem-particles" id="pgch-particles">
+      <span>💎</span><span>💎</span><span>💎</span><span>💎</span><span>💎</span>
+    </div>
+    <div class="pgch-gems-row" id="pgch-gems-row"></div>
+    <div class="pgch-title" id="pgch-title">보석 상자 발견!</div>
+    <div class="pgch-sub" id="pgch-sub">상자를 열어 보석을 획득하세요!</div>
+    <button class="pgch-btn open" id="pgch-btn" onclick="pgchStep()">✨ 열기!</button>
+  </div>
+</div>
+
 <!-- ══ 찌르기 모달 ══ -->
 <div class="nudge-overlay" id="nudge-overlay" style="display:none;" onclick="closeNudge(event)">
   <div class="nudge-modal" onclick="event.stopPropagation()">
@@ -2152,15 +2193,61 @@ function getUnitForLesson(lessonId) {
 }
 
 /* ─── PATH GEM CHEST ─── */
-function collectPathChest(pgId) {
+let _pgchId = null;
+let _pgchGems = 0;
+let _pgchOpened = false;
+
+function openPathChest(pgId) {
   if(S.pathChests.has(pgId)) return;
-  S.pathChests.add(pgId);
-  const gems = 5 + Math.floor(Math.random() * 11); // 5~15개
-  S.gems += gems;
-  updateTopbar();
-  persistProgress();
-  renderHome();
-  showToast('💎 보석 획득!', `경로 보석 ${gems}개를 받았어요!`, 'success');
+  _pgchId = pgId;
+  _pgchGems = 5 + Math.floor(Math.random() * 11);
+  _pgchOpened = false;
+  // 초기 상태 세팅
+  document.getElementById('pgch-chest-icon').textContent = '📦';
+  document.getElementById('pgch-chest-icon').className = 'pgch-chest-wrap';
+  document.getElementById('pgch-gems-row').innerHTML = '';
+  document.getElementById('pgch-particles').className = 'pgch-gem-particles';
+  document.getElementById('pgch-title').textContent = '보석 상자 발견!';
+  document.getElementById('pgch-sub').textContent = '상자를 열어 보석을 획득하세요!';
+  const btn = document.getElementById('pgch-btn');
+  btn.textContent = '✨ 열기!';
+  btn.className = 'pgch-btn open';
+  document.getElementById('pgch-overlay').classList.add('active');
+}
+
+function pgchStep() {
+  if(!_pgchOpened) {
+    // 1단계: 상자 흔들기 → 열림
+    _pgchOpened = true;
+    const icon = document.getElementById('pgch-chest-icon');
+    icon.classList.add('shake');
+    setTimeout(() => {
+      icon.textContent = '🎊';
+      icon.classList.remove('shake');
+      icon.classList.add('pop');
+      // 보석 파티클 버스트
+      document.getElementById('pgch-particles').classList.add('burst');
+      // 보석 카운트 표시
+      document.getElementById('pgch-gems-row').innerHTML =
+        `<span class="pgch-gem-icon">💎</span><span>${_pgchGems}</span>`;
+      document.getElementById('pgch-title').textContent = `보석 ${_pgchGems}개 획득!`;
+      document.getElementById('pgch-sub').textContent = '계속 학습하면 더 많은 보석이!';
+      const btn = document.getElementById('pgch-btn');
+      btn.textContent = '수집하기 →';
+      btn.className = 'pgch-btn claim';
+    }, 400);
+  } else {
+    // 2단계: 수집
+    if(!_pgchId) return;
+    S.pathChests.add(_pgchId);
+    S.gems += _pgchGems;
+    updateTopbar();
+    persistProgress();
+    document.getElementById('pgch-overlay').classList.remove('active');
+    renderHome();
+    showToast('💎 보석 획득!', `보석 ${_pgchGems}개를 받았어요!`, 'success');
+    _pgchId = null;
+  }
 }
 
 /* ─── CHEST & TITLE SYSTEM ─── */
@@ -2318,7 +2405,7 @@ function renderJourney() {
         pgDiv.innerHTML = `<div class="path-gem-icon">${chestSVG(pgState)}</div><div class="path-gem-label">${pgOpened ? '획득 완료' : pgUnlocked ? '열기!' : '🔒 잠김'}</div>`;
         if (!pgOpened) {
           pgDiv.addEventListener('click', () => {
-            if (pgUnlocked) collectPathChest(pgId);
+            if (pgUnlocked) openPathChest(pgId);
             else showToast('🔒 잠겨있어요!', '앞의 레슨을 모두 완료하면 열려요!', 'warning');
           });
         }
