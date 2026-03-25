@@ -38,11 +38,12 @@ body{
   background:var(--bg);color:var(--text);
   display:flex;flex-direction:column;height:100vh;max-height:100vh;
   padding-top:env(safe-area-inset-top);
+  padding-bottom:calc(55px + env(safe-area-inset-bottom));
   transition:background .3s,color .3s;
 }
 
 /* ── SCREENS ─────────────────────────────────── */
-.screen{display:none;flex:1;overflow-y:auto;overflow-x:hidden;flex-direction:column;padding-bottom:calc(52px + env(safe-area-inset-bottom));}
+.screen{display:none;flex:1;overflow-y:auto;overflow-x:hidden;flex-direction:column;}
 .screen.active{display:flex;}
 
 /* ── TOP BAR ─────────────────────────────────── */
