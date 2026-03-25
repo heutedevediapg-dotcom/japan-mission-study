@@ -1352,7 +1352,7 @@ body{
           <div class="shop-item-badge" id="hearts-status">현재 하트: 5개</div>
         </div>
         <button class="shop-buy-btn" id="buy-hearts-btn" onclick="buyHearts()">
-          <span class="btn-gem">💎</span> 350
+          <span class="btn-gem">💎</span> 100
         </button>
       </div>
       <div class="shop-item">
@@ -1363,7 +1363,7 @@ body{
           <div class="shop-item-badge" id="shield-status">미장착</div>
         </div>
         <button class="shop-buy-btn" id="buy-shield-btn" onclick="buyShield()">
-          <span class="btn-gem">💎</span> 500
+          <span class="btn-gem">💎</span> 200
         </button>
       </div>
     </div>
@@ -3492,12 +3492,12 @@ function openShop() {
 
   const heartsFull = S.hearts >= S.maxHearts;
   const heartsBtn = document.getElementById('buy-hearts-btn');
-  heartsBtn.disabled = S.gems < 350 || heartsFull;
-  heartsBtn.title = heartsFull ? '이미 최대 하트' : S.gems < 350 ? '보석이 부족해요' : '';
+  heartsBtn.disabled = S.gems < 100 || heartsFull;
+  heartsBtn.title = heartsFull ? '이미 최대 하트' : S.gems < 100 ? '보석이 부족해요' : '';
 
   const shieldBtn = document.getElementById('buy-shield-btn');
-  shieldBtn.disabled = S.gems < 500 || S.streakShield;
-  shieldBtn.title = S.streakShield ? '이미 방패 장착 중' : S.gems < 500 ? '보석이 부족해요' : '';
+  shieldBtn.disabled = S.gems < 200 || S.streakShield;
+  shieldBtn.title = S.streakShield ? '이미 방패 장착 중' : S.gems < 200 ? '보석이 부족해요' : '';
 
   modal.style.display = 'flex';
 }
@@ -3508,28 +3508,28 @@ function closeShop() {
 }
 
 function buyHearts() {
-  if(S.gems < 350) { showToast('💎 보석 부족', '보석이 부족해요! 보물 상자를 열어 보석을 모아보세요.', 'warning'); return; }
+  if(S.gems < 100) { showToast('💎 보석 부족', '보석이 부족해요! 보물 상자를 열어 보석을 모아보세요.', 'warning'); return; }
   if(S.hearts >= S.maxHearts) { showToast('❤️ 이미 최대', '하트가 이미 꽉 찼어요!', 'warning'); return; }
-  S.gems -= 350;
+  S.gems -= 100;
   S.hearts = S.maxHearts;
   persistProgress();
   pushMyProgress();
   updateGemDisplay();
   closeShop();
-  showToast('❤️ 하트 충전 완료!', `하트가 ${S.maxHearts}개로 충전됐어요! 💎 -350`, 'success');
+  showToast('❤️ 하트 충전 완료!', `하트가 ${S.maxHearts}개로 충전됐어요! 💎 -100`, 'success');
   renderHome();
 }
 
 function buyShield() {
-  if(S.gems < 500) { showToast('💎 보석 부족', '보석이 부족해요! 보물 상자를 열어 보석을 모아보세요.', 'warning'); return; }
+  if(S.gems < 200) { showToast('💎 보석 부족', '보석이 부족해요! 보물 상자를 열어 보석을 모아보세요.', 'warning'); return; }
   if(S.streakShield) { showToast('🛡️ 이미 장착 중', '연속 방패가 이미 장착되어 있어요!', 'warning'); return; }
-  S.gems -= 500;
+  S.gems -= 200;
   S.streakShield = true;
   persistProgress();
   pushMyProgress();
   updateGemDisplay();
   closeShop();
-  showToast('🛡️ 방패 장착 완료!', '연속 일수를 하루 쉬어도 보호해줘요! 💎 -500', 'success');
+  showToast('🛡️ 방패 장착 완료!', '연속 일수를 하루 쉬어도 보호해줘요! 💎 -200', 'success');
   showMascot('excited', '🛡️ 방패 장착!', '하루 쉬어도 연속 일수가 지켜져요!', 'bounce', 3500);
 }
 
