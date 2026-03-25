@@ -454,7 +454,8 @@ body{
 .fill-card{background:linear-gradient(135deg,#fffbeb,#fef3c7);border:2.5px solid #FFD900;border-radius:var(--r);padding:20px;text-align:center;margin:8px 0;}
 .fill-card-label{font-size:11px;font-weight:700;color:#92400e;letter-spacing:.05em;margin-bottom:6px;}
 .fill-card-text{font-size:26px;font-weight:800;color:var(--text);}
-.fill-card-hint{font-size:13px;color:var(--text2);margin-top:6px;}
+.fill-card-hint{font-size:14px;color:#92400e;margin-top:8px;font-weight:600;}
+.fill-card-meaning{font-size:13px;color:var(--text2);margin-top:3px;}
 
 /* ── REVIEW CARD (Home) ───────────────────────── */
 .review-card{background:linear-gradient(135deg,#fff3e0,#ffe0b2);border:2px solid #FF9600;border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:12px;transition:all .15s;-webkit-tap-highlight-color:transparent;}
@@ -2744,7 +2745,7 @@ function renderFill(q) {
     <div class="fill-card" onclick="speakJapanese('${jpSafe}',document.getElementById('speak-fill'))">
       <div class="fill-card-label">🔊 탭하여 듣기</div>
       <div class="fill-card-text">${q.reading}</div>
-      <div class="fill-card-hint">${extractKoreanMeaning(q.q) || ''}</div>
+      <div class="fill-card-hint">🇰🇷 ${extractKoreanMeaning(q.q) || q.q}</div>
       <button class="speak-btn" id="speak-fill" style="margin:10px auto 0;display:flex;" onclick="event.stopPropagation();speakJapanese('${jpSafe}',this)">🔊</button>
     </div>
     <div class="quiz-choices" id="choices">
