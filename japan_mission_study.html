@@ -180,7 +180,8 @@ body{
 .pgch-overlay{display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.72);align-items:center;justify-content:center;}
 .pgch-overlay.active{display:flex;}
 .pgch-box{background:var(--bg);border-radius:28px;padding:32px 28px 24px;text-align:center;width:88%;max-width:320px;animation:bounce .4s cubic-bezier(.34,1.56,.64,1);}
-.pgch-chest-wrap{font-size:88px;line-height:1;margin-bottom:8px;display:inline-block;}
+.pgch-chest-wrap{line-height:1;margin-bottom:8px;display:inline-block;}
+.pgch-chest-wrap svg{width:120px;height:105px;}
 .pgch-chest-wrap.shake{animation:pgchShake .5s ease;}
 .pgch-chest-wrap.pop{animation:pgchPop .4s cubic-bezier(.34,1.56,.64,1);}
 @keyframes pgchShake{0%,100%{transform:rotate(0)}20%{transform:rotate(-15deg)}40%{transform:rotate(15deg)}60%{transform:rotate(-10deg)}80%{transform:rotate(10deg)}}
@@ -1973,7 +1974,7 @@ body{
 <!-- ══ 경로 보석 상자 오픈 모달 ══ -->
 <div class="pgch-overlay" id="pgch-overlay">
   <div class="pgch-box">
-    <div class="pgch-chest-wrap" id="pgch-chest-icon">📦</div>
+    <div class="pgch-chest-wrap" id="pgch-chest-icon"></div>
     <div class="pgch-gem-particles" id="pgch-particles">
       <span>💎</span><span>💎</span><span>💎</span><span>💎</span><span>💎</span>
     </div>
@@ -2203,7 +2204,7 @@ function openPathChest(pgId) {
   _pgchGems = 5 + Math.floor(Math.random() * 11);
   _pgchOpened = false;
   // 초기 상태 세팅
-  document.getElementById('pgch-chest-icon').textContent = '📦';
+  document.getElementById('pgch-chest-icon').innerHTML = chestSVG('ready');
   document.getElementById('pgch-chest-icon').className = 'pgch-chest-wrap';
   document.getElementById('pgch-gems-row').innerHTML = '';
   document.getElementById('pgch-particles').className = 'pgch-gem-particles';
@@ -2222,7 +2223,7 @@ function pgchStep() {
     const icon = document.getElementById('pgch-chest-icon');
     icon.classList.add('shake');
     setTimeout(() => {
-      icon.textContent = '🎊';
+      icon.innerHTML = chestSVG('opened');
       icon.classList.remove('shake');
       icon.classList.add('pop');
       // 보석 파티클 버스트
