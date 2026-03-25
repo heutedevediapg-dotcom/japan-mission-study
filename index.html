@@ -205,6 +205,22 @@ body{
 .pgch-btn.open{background:#1CB0F6;color:#fff;}
 .pgch-btn.claim{background:#58CC02;color:#fff;}
 
+/* Heart Modal */
+.heart-modal-overlay{display:none;position:fixed;inset:0;z-index:450;background:rgba(0,0,0,.72);align-items:center;justify-content:center;}
+.heart-modal-overlay.active{display:flex;}
+.heart-modal-box{background:var(--bg);border-radius:28px;padding:32px 24px 24px;text-align:center;width:88%;max-width:320px;animation:bounce .4s cubic-bezier(.34,1.56,.64,1);}
+.hm-icon{font-size:64px;margin-bottom:8px;line-height:1;}
+.hm-title{font-size:20px;font-weight:900;color:var(--text);margin-bottom:6px;}
+.hm-sub{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.6;}
+.hm-btn{width:100%;padding:13px;border-radius:14px;border:none;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:8px;display:block;}
+.hm-btn.gems{background:#1CB0F6;color:#fff;}
+.hm-btn.gift{background:#FF6B9D;color:#fff;}
+.hm-btn.wait{background:var(--bg2);color:var(--text2);font-weight:600;font-size:13px;}
+/* Gift heart button in rank list */
+.gift-heart-btn{background:none;border:1.5px solid #FF6B9D;border-radius:20px;padding:4px 10px;font-size:12px;font-weight:700;color:#FF6B9D;cursor:pointer;white-space:nowrap;margin-left:4px;}
+.gift-heart-btn:active{transform:scale(.95);}
+.gift-heart-btn:disabled{opacity:.4;cursor:default;}
+
 /* Shop Modal */
 .shop-modal-overlay{
   display:none;position:fixed;inset:0;z-index:200;
@@ -1971,6 +1987,18 @@ body{
   </div>
 </div>
 
+<!-- ══ 하트 소진 모달 ══ -->
+<div class="heart-modal-overlay" id="heart-modal-overlay">
+  <div class="heart-modal-box">
+    <div class="hm-icon">💔</div>
+    <div class="hm-title">하트가 없어요!</div>
+    <div class="hm-sub" id="hm-sub">하트를 충전하고 계속 학습해요</div>
+    <button class="hm-btn gems" id="hm-gems-btn" onclick="refillHeartsWithGems()">💎 보석 50개로 충전</button>
+    <button class="hm-btn gift" onclick="goGetHeartGift()">❤️ 팀원에게 하트 받기</button>
+    <button class="hm-btn wait" onclick="closeHeartModal()">내일 자동 충전 (닫기)</button>
+  </div>
+</div>
+
 <!-- ══ 경로 보석 상자 오픈 모달 ══ -->
 <div class="pgch-overlay" id="pgch-overlay">
   <div class="pgch-box">
@@ -2031,7 +2059,7 @@ const S = {
   // Progress
   streak:0, xp:0, hearts:5, maxHearts:5,
   todayXP:0, dailyGoal:20,
-  lastStreakDate:'',
+  lastStreakDate:'', lastHeartRefillDate:'',
   completedToday:new Set(), allCompleted:new Set(),
   weekDone:[false,false,false,false,false,false,false],
   weekStartDate:'',
@@ -2191,6 +2219,63 @@ function isUnitComplete(unitNo) {
 function getUnitForLesson(lessonId) {
   const l = LESSONS.find(x => x.id === lessonId);
   return l ? l.unit : null;
+}
+
+/* ─── HEART MODAL ─── */
+function showHeartModal() {
+  const cost = 50;
+  const canAfford = S.gems >= cost;
+  document.getElementById('hm-sub').textContent = canAfford
+    ? `보석 ${cost}개로 하트 ${S.maxHearts}개를 충전할 수 있어요 (현재 💎${S.gems})`
+    : `보석이 부족해요 (현재 💎${S.gems} / 필요 ${cost}개)\n팀원에게 하트 선물을 요청하거나 내일 자동 충전을 기다려요`;
+  document.getElementById('hm-gems-btn').disabled = !canAfford;
+  document.getElementById('heart-modal-overlay').classList.add('active');
+}
+function closeHeartModal() {
+  document.getElementById('heart-modal-overlay').classList.remove('active');
+}
+function refillHeartsWithGems() {
+  const cost = 50;
+  if (S.gems < cost) return;
+  S.gems -= cost;
+  S.hearts = S.maxHearts;
+  updateTopbar();
+  persistProgress();
+  closeHeartModal();
+  showToast('❤️ 하트 충전!', `하트가 ${S.maxHearts}개로 충전됐어요!`, 'success');
+}
+function goGetHeartGift() {
+  closeHeartModal();
+  goTo('team');
+  setTimeout(() => showToast('❤️ 하트 선물 요청', '팀원 목록에서 ❤️+1 버튼을 눌러 선물을 받아보세요!', 'info'), 400);
+}
+
+/* ─── HEART GIFT (Firebase) ─── */
+function giftHeart(targetUid, targetName) {
+  if (S.hearts <= 1) {
+    showToast('❤️ 하트 부족', '하트가 1개 남았을 때는 선물할 수 없어요!', 'warning');
+    return;
+  }
+  if (!_db) { showToast('❌ 오프라인', '선물은 온라인 상태에서만 가능해요', 'warning'); return; }
+  S.hearts -= 1;
+  updateTopbar();
+  persistProgress();
+  _db.ref(`gifts/${targetUid}`).push({ from: CU.uid, fromName: CU.name, hearts: 1, ts: Date.now() });
+  renderTeam();
+  showToast('❤️ 하트 선물!', `${targetName}님께 하트 1개를 선물했어요!`, 'success');
+}
+function subscribeHeartGifts() {
+  if (!_db || !CU.uid) return;
+  _db.ref(`gifts/${CU.uid}`).on('value', snap => {
+    if (!snap || !snap.exists()) return;
+    let total = 0; const givers = [];
+    snap.forEach(child => { total += (child.val().hearts || 1); givers.push(child.val().fromName || '팀원'); });
+    if (total <= 0) return;
+    S.hearts = Math.min(S.maxHearts, S.hearts + total);
+    updateTopbar(); persistProgress();
+    showToast('❤️ 하트 도착!', `${[...new Set(givers)].join(', ')}님이 하트 ${total}개를 선물했어요!`, 'success');
+    _db.ref(`gifts/${CU.uid}`).remove();
+  });
 }
 
 /* ─── PATH GEM CHEST ─── */
@@ -2777,6 +2862,8 @@ function checkArrange(correctJp) {
    QUIZ
 ═══════════════════════════════════════════ */
 function startLesson(lesson) {
+  if (!lesson) return;
+  if (S.hearts <= 0) { showHeartModal(); return; }
   S.lesson = lesson;
   S.quizHearts = Math.min(S.hearts, 3);
   S.score = 0;
@@ -3797,7 +3884,7 @@ const VERSION_KEY  = 'missionJP_ver'; // progress 스냅샷과 별도 키 (persi
 
 function buildProgressSnapshot() {
   return {
-    streak:S.streak, lastStreakDate:S.lastStreakDate, xp:S.xp, hearts:S.hearts, maxHearts:S.maxHearts,
+    streak:S.streak, lastStreakDate:S.lastStreakDate, lastHeartRefillDate:S.lastHeartRefillDate||'', xp:S.xp, hearts:S.hearts, maxHearts:S.maxHearts,
     todayXP:S.todayXP, dailyGoal:S.dailyGoal,
     weekDone:S.weekDone,
     weekStartDate: S.weekStartDate || getWeekStartDate(),
@@ -3820,6 +3907,7 @@ function applyProgressSnapshot(snap) {
   if(!snap) return;
   S.streak = snap.streak ?? 0;
   S.lastStreakDate = snap.lastStreakDate ?? '';
+  S.lastHeartRefillDate = snap.lastHeartRefillDate ?? '';
   S.xp = snap.xp ?? 0;
   S.hearts = snap.hearts ?? 5;
   S.maxHearts = snap.maxHearts ?? 5;
@@ -3937,6 +4025,12 @@ function loginAs(uid, name) {
       }
     }
     applyProgressSnapshot(saved);
+    // 날짜 바뀌면 하트 자동 충전
+    const todayStr = new Date().toDateString();
+    if (S.lastHeartRefillDate !== todayStr) {
+      S.hearts = S.maxHearts;
+      S.lastHeartRefillDate = todayStr;
+    }
   } else {
     S.streak=0; S.lastStreakDate=''; S.xp=0; S.hearts=5; S.maxHearts=5;
     S.todayXP=0; S.dailyGoal=20;
@@ -3963,6 +4057,7 @@ function loginAs(uid, name) {
   if(initFirebase()) {
     subscribeTeam();
     subscribeNudges();
+    subscribeHeartGifts();
     if(saved) {
       // 로컬 데이터 있음 → 바로 Firebase에 업로드
       pushMyProgress();
@@ -4456,9 +4551,12 @@ function renderRankList(members) {
     const row      = document.createElement('div');
     row.className  = `rank-item${m.doneToday?' done':''}${m.isMe?' me':''}`;
 
-    const actionBtn = m.isMe ? '' : m.doneToday
+    const canGift = !m.isMe && S.hearts > 1;
+    const giftBtn = m.isMe ? '' : `<button class="gift-heart-btn" onclick="giftHeart('${m.uid}','${m.name.replace(/'/g,'')}')" ${canGift?'':'disabled'} title="하트 선물">❤️+1</button>`;
+    const nudgeBtn = m.isMe ? '' : m.doneToday
       ? `<div class="done-check">✅</div>`
       : `<button class="nudge-btn" onclick="openNudge('${m.uid}','${m.name.replace(/'/g,'')}')" title="찌르기">👆</button>`;
+    const actionBtn = nudgeBtn + giftBtn;
 
     row.innerHTML = `
       <div class="rank-num ${numClass}">${rank}</div>
