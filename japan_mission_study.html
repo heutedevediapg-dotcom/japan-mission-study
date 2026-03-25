@@ -3668,7 +3668,8 @@ function restoreFromFirebase() {
   if(!_db || !CU.uid) { pushMyProgress(); return; }
   _db.ref(`team/${CU.uid}`).once('value', snap => {
     const data = snap.val();
-    if(data && (data.xp || 0) > 0) {
+    // xp > 0 조건 제거: ts 기준으로 기존 데이터 존재 여부 확인 (xp=0 데이터도 복원)
+    if(data && data.ts) {
       // Firebase에 기존 데이터가 있으면 복원
       S.xp = data.xp || 0;
       S.streak = data.streak || 0;
@@ -3676,9 +3677,11 @@ function restoreFromFirebase() {
       S.todayXP = (data.lastStudied === today) ? (data.todayXP || 0) : 0;
       persistProgress();  // localStorage에도 저장
       renderHome();       // 화면 업데이트
+      pushMyProgress();   // 복원된 데이터로 Firebase 업데이트
+    } else {
+      // Firebase에도 데이터 없음 → 현재 상태(초기값) push
+      pushMyProgress();
     }
-    // 복원 후 (또는 Firebase에도 데이터 없을 시) push
-    pushMyProgress();
   });
 }
 
@@ -3704,7 +3707,7 @@ function subscribeNudges() {
     const n = snap.val();
     if(!n) return;
     const age = Date.now() - (n.ts || 0);
-    if(age > 60000) { snap.ref.remove(); return; }  // 1분 지난 건 무시
+    if(age > 86400000) { snap.ref.remove(); return; }  // 24시간 지난 건 무시
     snap.ref.remove();  // 읽으면 삭제
     showToast(`🐾 ${n.fromName}이(가) 찌릅니다!`, n.message, 'push');
     showMascot('cheer', `${n.fromName}의 메시지 🐾`, n.message, 'wiggle', 5000);
@@ -3756,14 +3759,18 @@ function renderTeam() {
   const fbOk  = !!_db;
 
   // 팀 데이터 합성 (Firebase + 로컬 내 데이터)
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
   const members = PRESET_ACCOUNTS.map(a => {
     const remote = _teamData[a.id] || {};
     const isMe   = a.id === CU.uid;
     const xp     = isMe ? S.xp       : (remote.xp     || 0);
     const todayXP= isMe ? S.todayXP  : (remote.todayXP|| 0);
-    const streak = isMe ? S.streak   : (remote.streak  || 0);
-    const name   = isMe ? CU.name    : (remote.name    || a.name);
     const lastStudied = isMe ? today : (remote.lastStudied || '');
+    // streak 검증: 마지막 학습일이 오늘도 어제도 아니면 연속 끊김 → 0으로 표시
+    const rawStreak = isMe ? S.streak : (remote.streak || 0);
+    const streak = isMe ? rawStreak
+      : (lastStudied === today || lastStudied === yesterday ? rawStreak : 0);
+    const name   = isMe ? CU.name    : (remote.name    || a.name);
     const doneToday   = todayXP > 0 && lastStudied === today;
     return { uid: a.id, name, xp, todayXP, streak, doneToday, isMe };
   });
@@ -3820,7 +3827,10 @@ function renderTop3(members) {
   members.slice(0,3).forEach((m,i) => {
     const card = document.createElement('div');
     card.className = `top3-card ${medals[i]}`;
-    const shortName = m.name;
+    // "선교대원 N호" 기본 이름에서 "호" 제거, 닉네임 변경 시 그대로 사용
+    const shortName = /^선교대원\s*\d+호$/.test(m.name)
+      ? m.name.replace(/호$/, '').trim()
+      : m.name;
     card.innerHTML = `
       <div class="top3-medal">${emojis[i]}</div>
       <div class="top3-name">${m.isMe ? '나 ('+shortName+')' : shortName}</div>
