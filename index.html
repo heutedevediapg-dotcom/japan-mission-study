@@ -4569,20 +4569,48 @@ function renderFlightTrack(members) {
   container.innerHTML = '';
   const maxXP = Math.max(...members.map(m=>m.xp), 1);
 
-  // 상위 5명 + 나 표시 (너무 많으면 겹침)
-  const toShow = members.slice(0, 5);
-  if(!toShow.find(m=>m.isMe) && members.find(m=>m.isMe)) {
-    toShow.push(members.find(m=>m.isMe));
+  // 시작하지 않은 사람(xp=0) 제외
+  const active = members.filter(m => m.xp > 0);
+
+  // 상위 5명 + 나 표시
+  const toShow = active.slice(0, 5);
+  if(!toShow.find(m=>m.isMe) && active.find(m=>m.isMe)) {
+    toShow.push(active.find(m=>m.isMe));
   }
 
-  toShow.forEach((m, i) => {
-    const pct  = Math.min(95, Math.max(2, (m.xp / maxXP) * 93));
-    const rank = members.indexOf(m) + 1;
-    const div  = document.createElement('div');
-    div.className = `flight-plane${m.isMe?' me':''}`;
-    div.style.left = `${pct}%`;
-    div.style.zIndex = 10 - i;
-    div.innerHTML = `<span class="fp-rank">${m.isMe?'나':rank+'위'}</span>✈️`;
+  // 위치 계산 후 pct 기준 정렬
+  const planes = toShow.map(m => ({
+    m,
+    pct: Math.min(95, Math.max(2, (m.xp / maxXP) * 93)),
+    rank: members.indexOf(m) + 1,
+  })).sort((a, b) => a.pct - b.pct);
+
+  // 5% 이내 근접 비행기 그룹화
+  const groups = [];
+  planes.forEach(p => {
+    const last = groups[groups.length - 1];
+    if(last && Math.abs(last.pct - p.pct) <= 5) {
+      last.items.push(p);
+    } else {
+      groups.push({ pct: p.pct, items: [p] });
+    }
+  });
+
+  groups.forEach(g => {
+    const isMe = g.items.some(p => p.m.isMe);
+    let label;
+    if(g.items.length === 1) {
+      label = g.items[0].m.isMe ? '나' : g.items[0].rank + '위';
+    } else {
+      const nonMeRanks = g.items.filter(p => !p.m.isMe).map(p => p.rank + '위');
+      if(isMe && nonMeRanks.length > 0) label = nonMeRanks[0] + ' 또는 나';
+      else if(isMe) label = '나';
+      else label = nonMeRanks[0];
+    }
+    const div = document.createElement('div');
+    div.className = `flight-plane${isMe?' me':''}`;
+    div.style.left = `${g.pct}%`;
+    div.innerHTML = `<span class="fp-rank">${label}</span>✈️`;
     container.appendChild(div);
   });
 }
