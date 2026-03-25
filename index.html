@@ -2009,7 +2009,7 @@ body{
     <div class="pgch-gems-row" id="pgch-gems-row"></div>
     <div class="pgch-title" id="pgch-title">보석 상자 발견!</div>
     <div class="pgch-sub" id="pgch-sub">상자를 열어 보석을 획득하세요!</div>
-    <button class="pgch-btn open" id="pgch-btn" onclick="pgchStep()">✨ 열기!</button>
+    <button class="pgch-btn open" id="pgch-btn">✨ 열기!</button>
   </div>
 </div>
 
@@ -2298,43 +2298,45 @@ function openPathChest(pgId) {
   const btn = document.getElementById('pgch-btn');
   btn.textContent = '✨ 열기!';
   btn.className = 'pgch-btn open';
+  btn.onclick = pgchOpen;
   document.getElementById('pgch-overlay').classList.add('active');
 }
 
-function pgchStep() {
-  if(!_pgchOpened) {
-    // 1단계: 상자 흔들기 → 열림
-    _pgchOpened = true;
-    const icon = document.getElementById('pgch-chest-icon');
-    icon.classList.add('shake');
-    setTimeout(() => {
-      icon.innerHTML = chestSVG('opened');
-      icon.classList.remove('shake');
-      icon.classList.add('pop');
-      // 보석 파티클 버스트
-      document.getElementById('pgch-particles').classList.add('burst');
-      // 보석 카운트 표시
-      document.getElementById('pgch-gems-row').innerHTML =
-        `<span class="pgch-gem-icon">💎</span><span>${_pgchGems}</span>`;
-      document.getElementById('pgch-title').textContent = `보석 ${_pgchGems}개 획득!`;
-      document.getElementById('pgch-sub').textContent = '계속 학습하면 더 많은 보석이!';
-      const btn = document.getElementById('pgch-btn');
-      btn.textContent = '수집하기 →';
-      btn.className = 'pgch-btn claim';
-    }, 400);
-  } else {
-    // 2단계: 수집
-    if(!_pgchId) return;
-    S.pathChests.add(_pgchId);
-    S.gems += _pgchGems;
-    updateTopbar();
-    persistProgress();
-    document.getElementById('pgch-overlay').classList.remove('active');
-    renderHome();
-    showToast('💎 보석 획득!', `보석 ${_pgchGems}개를 받았어요!`, 'success');
-    _pgchId = null;
-  }
+function pgchOpen() {
+  _pgchOpened = true;
+  const icon = document.getElementById('pgch-chest-icon');
+  icon.classList.add('shake');
+  const btn = document.getElementById('pgch-btn');
+  btn.disabled = true; // 애니메이션 중 중복 클릭 방지
+  setTimeout(() => {
+    icon.innerHTML = chestSVG('opened');
+    icon.classList.remove('shake');
+    icon.classList.add('pop');
+    document.getElementById('pgch-particles').classList.add('burst');
+    document.getElementById('pgch-gems-row').innerHTML =
+      `<span class="pgch-gem-icon">💎</span><span>${_pgchGems}</span>`;
+    document.getElementById('pgch-title').textContent = `보석 ${_pgchGems}개 획득!`;
+    document.getElementById('pgch-sub').textContent = '계속 학습하면 더 많은 보석이!';
+    btn.textContent = '수집하기 →';
+    btn.className = 'pgch-btn claim';
+    btn.disabled = false;
+    btn.onclick = pgchClaim; // 수집 핸들러로 교체
+  }, 400);
 }
+
+function pgchClaim() {
+  if(!_pgchId) return;
+  S.pathChests.add(_pgchId);
+  S.gems += _pgchGems;
+  updateTopbar();
+  persistProgress();
+  document.getElementById('pgch-overlay').classList.remove('active');
+  renderHome();
+  showToast('💎 보석 획득!', `보석 ${_pgchGems}개를 받았어요!`, 'success');
+  _pgchId = null;
+}
+
+function pgchStep() { pgchOpen(); } // 하위 호환
 
 /* ─── CHEST & TITLE SYSTEM ─── */
 function openChest(chestId) {
