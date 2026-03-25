@@ -37,7 +37,7 @@ body{
   font-family:-apple-system,'Hiragino Kaku Gothic Pro','Yu Gothic UI','Malgun Gothic',sans-serif;
   background:var(--bg);color:var(--text);
   display:flex;flex-direction:column;height:100vh;max-height:100vh;
-  padding-top:env(safe-area-inset-top);
+  padding-top:max(env(safe-area-inset-top), 50px);
   padding-bottom:calc(55px + env(safe-area-inset-bottom));
   transition:background .3s,color .3s;
 }
