@@ -2587,8 +2587,10 @@ function showResult(finished) {
     const stars = S.score===total ? 3 : S.score>=Math.ceil(total*.7) ? 2 : 1;
     S.lessonStars[S.lesson.id] = Math.max(S.lessonStars[S.lesson.id]||0, stars);
     S.completedToday.add(S.lesson.id);
-    if(S.todayXP >= S.dailyGoal) {
+    const todayStr = new Date().toDateString();
+    if(S.todayXP >= S.dailyGoal && S.lastStreakDate !== todayStr) {
       S.streak++;
+      S.lastStreakDate = todayStr;
       S.weekDone[new Date().getDay()] = true;
     }
     // Check if a chest is newly unlockable
@@ -3346,7 +3348,7 @@ let CU = { uid:null, name:'' };
 
 function buildProgressSnapshot() {
   return {
-    streak:S.streak, xp:S.xp, hearts:S.hearts, maxHearts:S.maxHearts,
+    streak:S.streak, lastStreakDate:S.lastStreakDate, xp:S.xp, hearts:S.hearts, maxHearts:S.maxHearts,
     todayXP:S.todayXP, dailyGoal:S.dailyGoal,
     weekDone:S.weekDone,
     allCompleted:[...S.allCompleted],
@@ -3364,6 +3366,7 @@ function buildProgressSnapshot() {
 function applyProgressSnapshot(snap) {
   if(!snap) return;
   S.streak = snap.streak ?? 0;
+  S.lastStreakDate = snap.lastStreakDate ?? '';
   S.xp = snap.xp ?? 0;
   S.hearts = snap.hearts ?? 5;
   S.maxHearts = snap.maxHearts ?? 5;
@@ -3450,7 +3453,7 @@ function loginAs(uid, name) {
     if(savedDay !== today) saved.todayXP = 0;
     applyProgressSnapshot(saved);
   } else {
-    S.streak=0; S.xp=0; S.hearts=5; S.maxHearts=5;
+    S.streak=0; S.lastStreakDate=''; S.xp=0; S.hearts=5; S.maxHearts=5;
     S.todayXP=0; S.dailyGoal=20;
     S.weekDone=[false,false,false,false,false,false,false];
     S.allCompleted=new Set(); S.notifEnabled=false;
@@ -3792,7 +3795,7 @@ function renderTop3(members) {
   members.slice(0,3).forEach((m,i) => {
     const card = document.createElement('div');
     card.className = `top3-card ${medals[i]}`;
-    const shortName = m.name.replace('선교대원 ','').replace('호','') + '호';
+    const shortName = m.name;
     card.innerHTML = `
       <div class="top3-medal">${emojis[i]}</div>
       <div class="top3-name">${m.isMe ? '나 ('+shortName+')' : shortName}</div>
