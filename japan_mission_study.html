@@ -4453,7 +4453,7 @@ function restoreFromFirebase() {
       if(data.lastHeartRefillDate) S.lastHeartRefillDate = data.lastHeartRefillDate;
       if(data.maxHearts       !== undefined) S.maxHearts       = data.maxHearts;
       if(data.notifTime)           S.notifTime       = data.notifTime;
-      if(data.notifEnabled    !== undefined) S.notifEnabled    = data.notifEnabled;
+      if(data.notifEnabled === true) S.notifEnabled = true; // false는 복원 안함 — 기기별 기본값 ON 유지
       if(data.sound           !== undefined) S.sound           = data.sound;
       if(data.darkMode        !== undefined) {
         S.darkMode = data.darkMode;
