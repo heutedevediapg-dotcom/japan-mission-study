@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>메구미링고</title>
-<link rel="manifest" href="/manifest.json">
+<link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#58CC02">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="메구미링고">
-<link rel="apple-touch-icon" href="/icon.svg">
+<link rel="apple-touch-icon" href="./megumi-face-192.png">
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 <script src="./lessons.js"></script>
@@ -3710,6 +3710,13 @@ function pushMyProgress() {
     lastStudied:    lastStudied,
     lastStreakDate: S.lastStreakDate || '',
     ts:             Date.now(),
+    // 학습 진행 데이터 (기기 변경/URL 변경 시에도 복원 가능하도록)
+    allCompleted:   [...S.allCompleted],
+    lessonStars:    S.lessonStars || {},
+    titles:         [...S.titles],
+    openedChests:   [...S.openedChests],
+    weekDone:       S.weekDone,
+    enabledCats:    [...S.enabledCats],
   });
 }
 
@@ -3736,6 +3743,13 @@ function restoreFromFirebase() {
       }
       const lastStudiedDate = data.lastStudied || lastStreakDate || '';
       S.todayXP = (lastStudiedDate === today) ? (data.todayXP || 0) : 0;
+      // 학습 진행 데이터 복원
+      if(data.allCompleted)  S.allCompleted  = new Set(data.allCompleted);
+      if(data.lessonStars)   S.lessonStars   = data.lessonStars;
+      if(data.titles)        S.titles        = new Set(data.titles);
+      if(data.openedChests)  S.openedChests  = new Set(data.openedChests);
+      if(data.weekDone)      S.weekDone      = data.weekDone;
+      if(data.enabledCats)   S.enabledCats   = new Set(data.enabledCats);
       persistProgress();  // localStorage에도 저장
       renderHome();       // 화면 업데이트
       pushMyProgress();   // 복원된 데이터로 Firebase 업데이트
