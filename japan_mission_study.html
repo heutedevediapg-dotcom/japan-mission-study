@@ -1471,7 +1471,7 @@ body{
           <label class="auth-label">비밀번호</label>
           <input class="auth-input" id="login-pw" type="password" placeholder="비밀번호를 입력하세요" autocomplete="current-password">
         </div>
-        <button class="auth-btn" onclick="doLogin()">로그인 →</button>
+        <button class="auth-btn" onclick="doLogin()">로그인</button>
       </div>
     </div>
   </div>
@@ -1748,7 +1748,7 @@ body{
 
     <!-- Quiz Start Button -->
     <button class="gospel-quiz-btn" onclick="startGospelQuiz()">
-      ✝️ 사영리 퀴즈 풀기 →
+      ✝️ 사영리 퀴즈 풀기
     </button>
     <div style="height:8px;"></div>
 
@@ -1947,7 +1947,7 @@ body{
     </div>
     <div class="cpw-btns">
       <button class="cpw-btn-cancel" onclick="closeChangePw()">취소</button>
-      <button class="cpw-btn-save" onclick="doChangePw()">변경하기 →</button>
+      <button class="cpw-btn-save" onclick="doChangePw()">변경하기</button>
     </div>
   </div>
 </div>
@@ -2317,7 +2317,7 @@ function pgchOpen() {
       `<span class="pgch-gem-icon">💎</span><span>${_pgchGems}</span>`;
     document.getElementById('pgch-title').textContent = `보석 ${_pgchGems}개 획득!`;
     document.getElementById('pgch-sub').textContent = '계속 학습하면 더 많은 보석이!';
-    btn.textContent = '수집하기 →';
+    btn.textContent = '수집하기';
     btn.className = 'pgch-btn claim';
     btn.disabled = false;
     btn.onclick = pgchClaim; // 수집 핸들러로 교체
@@ -2681,7 +2681,7 @@ function renderMCQ(q) {
         </button>`).join('')}
     </div>
     <div class="quiz-feedback" id="feedback"></div>
-    <button class="quiz-continue-btn green" id="continue-btn" style="display:none;" onclick="nextQuestion()">계속하기 →</button>`;
+    <button class="quiz-continue-btn green" id="continue-btn" style="display:none;" onclick="nextQuestion()">계속하기</button>`;
   if(document.activeElement) document.activeElement.blur();
 }
 
@@ -2725,7 +2725,7 @@ function renderReverse(q) {
         </button>`).join('')}
     </div>
     <div class="quiz-feedback" id="feedback"></div>
-    <button class="quiz-continue-btn green" id="continue-btn" style="display:none;" onclick="nextQuestion()">계속하기 →</button>`;
+    <button class="quiz-continue-btn green" id="continue-btn" style="display:none;" onclick="nextQuestion()">계속하기</button>`;
   if(document.activeElement) document.activeElement.blur();
   // 역방향 타입은 자동 재생 (듣고 뜻 맞추기)
   setTimeout(() => speakJapanese(q.jp, document.getElementById('speak-rev')), 400);
@@ -2754,7 +2754,7 @@ function renderFill(q) {
         </button>`).join('')}
     </div>
     <div class="quiz-feedback" id="feedback"></div>
-    <button class="quiz-continue-btn green" id="continue-btn" style="display:none;" onclick="nextQuestion()">계속하기 →</button>`;
+    <button class="quiz-continue-btn green" id="continue-btn" style="display:none;" onclick="nextQuestion()">계속하기</button>`;
   if(document.activeElement) document.activeElement.blur();
   // 발음 타입은 자동 재생
   setTimeout(() => speakJapanese(q.jp, document.getElementById('speak-fill')), 400);
@@ -2791,7 +2791,7 @@ function renderArrange(q) {
     </div>
     <div class="quiz-feedback" id="feedback"></div>
     <button class="arr-check-btn" id="arr-check" onclick="checkArrange('${jpSafe}')">확인하기</button>
-    <button class="quiz-continue-btn green" id="continue-btn" style="display:none;" onclick="nextQuestion()">계속하기 →</button>`;
+    <button class="quiz-continue-btn green" id="continue-btn" style="display:none;" onclick="nextQuestion()">계속하기</button>`;
   if(document.activeElement) document.activeElement.blur();
 }
 
