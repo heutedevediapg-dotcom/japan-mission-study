@@ -1877,6 +1877,7 @@ const S = {
   todayXP:0, dailyGoal:20,
   completedToday:new Set(), allCompleted:new Set(),
   weekDone:[true,true,true,false,false,false,false],
+  weekStartDate:'',
 
   // Quiz
   lesson:null, questions:[], qIndex:0, score:0,
@@ -3378,11 +3379,18 @@ function saveUserProgress(uid, data) {
 // ── Current user state ────────────────────────
 let CU = { uid:null, name:'' };
 
+function getWeekStartDate() {
+  const d = new Date();
+  d.setDate(d.getDate() - d.getDay()); // 이번 주 일요일
+  return d.toDateString();
+}
+
 function buildProgressSnapshot() {
   return {
     streak:S.streak, lastStreakDate:S.lastStreakDate, xp:S.xp, hearts:S.hearts, maxHearts:S.maxHearts,
     todayXP:S.todayXP, dailyGoal:S.dailyGoal,
     weekDone:S.weekDone,
+    weekStartDate: S.weekStartDate || getWeekStartDate(),
     allCompleted:[...S.allCompleted],
     notifEnabled:S.notifEnabled, notifTime:S.notifTime,
     darkMode:S.darkMode, sound:S.sound, qCount:S.qCount,
@@ -3404,7 +3412,12 @@ function applyProgressSnapshot(snap) {
   S.maxHearts = snap.maxHearts ?? 5;
   S.todayXP = snap.todayXP ?? 0;
   S.dailyGoal = snap.dailyGoal ?? 20;
-  S.weekDone = snap.weekDone ?? [false,false,false,false,false,false,false];
+  const _curWeekStart = getWeekStartDate();
+  const _snapWeekStart = snap.weekStartDate || '';
+  S.weekDone = (_snapWeekStart === _curWeekStart)
+    ? (snap.weekDone ?? [false,false,false,false,false,false,false])
+    : [false,false,false,false,false,false,false];
+  S.weekStartDate = _curWeekStart;
   S.allCompleted = new Set(snap.allCompleted ?? []);
   S.notifEnabled = snap.notifEnabled ?? true;
   S.notifTime = snap.notifTime ?? '09:00';
@@ -3495,6 +3508,7 @@ function loginAs(uid, name) {
     S.streak=0; S.lastStreakDate=''; S.xp=0; S.hearts=5; S.maxHearts=5;
     S.todayXP=0; S.dailyGoal=20;
     S.weekDone=[false,false,false,false,false,false,false];
+    S.weekStartDate=getWeekStartDate();
     S.allCompleted=new Set(); S.notifEnabled=true;
     S.notifTime='09:00'; S.darkMode=false; S.sound=true;
     S.qCount=5;
@@ -3721,6 +3735,7 @@ function pushMyProgress() {
     ...(S.titles.size > 0        ? { titles:        [...S.titles]        } : {}),
     ...(S.openedChests.size > 0  ? { openedChests:  [...S.openedChests]  } : {}),
     weekDone:       S.weekDone,
+    weekStartDate:  S.weekStartDate || getWeekStartDate(),
     enabledCats:    [...S.enabledCats],
   });
 }
@@ -3753,7 +3768,12 @@ function restoreFromFirebase() {
       if(data.lessonStars   && Object.keys(data.lessonStars).length > 0) S.lessonStars = data.lessonStars;
       if(data.titles        && data.titles.length        > 0) S.titles        = new Set(data.titles);
       if(data.openedChests  && data.openedChests.length  > 0) S.openedChests  = new Set(data.openedChests);
-      if(data.weekDone)      S.weekDone      = data.weekDone;
+      const _fbWeekStart = data.weekStartDate || '';
+      const _curWeekStart = getWeekStartDate();
+      S.weekDone = (_fbWeekStart === _curWeekStart && data.weekDone)
+        ? data.weekDone
+        : [false,false,false,false,false,false,false];
+      S.weekStartDate = _curWeekStart;
       if(data.enabledCats   && data.enabledCats.length   > 0) S.enabledCats   = new Set(data.enabledCats);
       persistProgress();  // localStorage에도 저장
       renderHome();       // 화면 업데이트
