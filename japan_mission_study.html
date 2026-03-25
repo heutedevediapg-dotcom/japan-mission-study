@@ -174,7 +174,7 @@ body{
   align-items:center;justify-content:center;
 }
 .shop-modal{
-  background:var(--card);border-radius:24px;padding:28px 24px;
+  background:var(--bg);border-radius:24px;padding:28px 24px;
   max-width:340px;width:92%;
   box-shadow:0 8px 32px rgba(0,0,0,.25);
 }
@@ -1363,7 +1363,7 @@ body{
           <div class="shop-item-badge" id="shield-status">미장착</div>
         </div>
         <button class="shop-buy-btn" id="buy-shield-btn" onclick="buyShield()">
-          <span class="btn-gem">💎</span> 200
+          <span class="btn-gem">💎</span> 500
         </button>
       </div>
     </div>
@@ -1966,7 +1966,7 @@ const S = {
   streak:3, xp:240, hearts:5, maxHearts:5,
   todayXP:0, dailyGoal:20,
   completedToday:new Set(), allCompleted:new Set(),
-  weekDone:[true,true,true,false,false,false,false],
+  weekDone:[false,false,false,false,false,false,false],
   weekStartDate:'',
 
   // Quiz
@@ -3496,8 +3496,8 @@ function openShop() {
   heartsBtn.title = heartsFull ? '이미 최대 하트' : S.gems < 350 ? '보석이 부족해요' : '';
 
   const shieldBtn = document.getElementById('buy-shield-btn');
-  shieldBtn.disabled = S.gems < 200 || S.streakShield;
-  shieldBtn.title = S.streakShield ? '이미 방패 장착 중' : S.gems < 200 ? '보석이 부족해요' : '';
+  shieldBtn.disabled = S.gems < 500 || S.streakShield;
+  shieldBtn.title = S.streakShield ? '이미 방패 장착 중' : S.gems < 500 ? '보석이 부족해요' : '';
 
   modal.style.display = 'flex';
 }
@@ -3521,15 +3521,15 @@ function buyHearts() {
 }
 
 function buyShield() {
-  if(S.gems < 200) { showToast('💎 보석 부족', '보석이 부족해요! 보물 상자를 열어 보석을 모아보세요.', 'warning'); return; }
+  if(S.gems < 500) { showToast('💎 보석 부족', '보석이 부족해요! 보물 상자를 열어 보석을 모아보세요.', 'warning'); return; }
   if(S.streakShield) { showToast('🛡️ 이미 장착 중', '연속 방패가 이미 장착되어 있어요!', 'warning'); return; }
-  S.gems -= 200;
+  S.gems -= 500;
   S.streakShield = true;
   persistProgress();
   pushMyProgress();
   updateGemDisplay();
   closeShop();
-  showToast('🛡️ 방패 장착 완료!', '연속 일수를 하루 쉬어도 보호해줘요! 💎 -200', 'success');
+  showToast('🛡️ 방패 장착 완료!', '연속 일수를 하루 쉬어도 보호해줘요! 💎 -500', 'success');
   showMascot('excited', '🛡️ 방패 장착!', '하루 쉬어도 연속 일수가 지켜져요!', 'bounce', 3500);
 }
 
