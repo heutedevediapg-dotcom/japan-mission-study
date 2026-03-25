@@ -222,40 +222,6 @@ body{
 .shop-buy-btn:disabled{background:#BDBDBD;cursor:not-allowed;}
 .shop-buy-btn .btn-gem{font-size:14px;}
 /* Mid-Lesson Gem Chest Modal */
-.mid-chest-overlay{
-  display:none;position:fixed;inset:0;z-index:500;
-  background:rgba(0,0,0,.6);
-  align-items:center;justify-content:center;
-}
-.mid-chest-overlay.active{display:flex;}
-.mid-chest-box{
-  background:var(--bg);border-radius:28px;padding:36px 28px 28px;
-  text-align:center;max-width:300px;width:88%;
-  box-shadow:0 12px 40px rgba(0,0,0,.3);
-  animation:bounce .35s cubic-bezier(.34,1.56,.64,1);
-}
-.mid-chest-icon-wrap{
-  font-size:72px;line-height:1;margin-bottom:4px;
-  animation:chestPulse 1.8s ease infinite;
-  display:inline-block;
-}
-.mid-chest-title{font-size:21px;font-weight:900;color:var(--text);margin:10px 0 4px;}
-.mid-chest-sub{font-size:13px;color:var(--text2);margin-bottom:18px;}
-.mid-chest-gem-preview{
-  display:inline-flex;align-items:center;gap:6px;
-  background:var(--blue-lt);border-radius:14px;
-  padding:8px 18px;font-size:18px;font-weight:900;
-  color:var(--blue);margin-bottom:22px;
-}
-.mid-chest-open-btn{
-  width:100%;padding:16px;border:none;border-radius:16px;
-  background:linear-gradient(135deg,#1CB0F6,#0085C7);
-  color:#fff;font-size:17px;font-weight:900;
-  cursor:pointer;letter-spacing:-.3px;
-  box-shadow:0 4px 0 #0060A0;
-  transition:transform .1s,box-shadow .1s;
-}
-.mid-chest-open-btn:active{transform:translateY(2px);box-shadow:0 2px 0 #0060A0;}
 /* Title Award Modal */
 .title-modal-overlay{
   display:none;position:fixed;inset:0;z-index:200;
@@ -1415,20 +1381,6 @@ body{
   </div>
 </div>
 
-<!-- Mid-Lesson Gem Chest Modal -->
-<div class="mid-chest-overlay" id="mid-chest-overlay">
-  <div class="mid-chest-box">
-    <div class="mid-chest-icon-wrap">💎</div>
-    <div class="mid-chest-title">보석 상자 발견!</div>
-    <div class="mid-chest-sub">잠깐, 학습 중에 보석이 나타났어요!</div>
-    <div class="mid-chest-gem-preview">
-      <span>💎</span>
-      <span id="mid-chest-gem-count">10</span>
-      <span>개</span>
-    </div>
-    <button class="mid-chest-open-btn" onclick="collectMidChest()">열기! ✨</button>
-  </div>
-</div>
 
 <!-- Title Award Modal -->
 <div class="title-modal-overlay" id="title-modal" onclick="if(event.target===this)closeTitleModal()">
@@ -2046,7 +1998,6 @@ const S = {
   lesson:null, questions:[], qIndex:0, score:0,
   quizHearts:5, answered:false, selectedAnswer:null,
   isReview:false,
-  _midChestShown:false, _midChestGems:0,
 
   // Settings
   notifEnabled:true, notifTime:'09:00',
@@ -2734,8 +2685,6 @@ function startLesson(lesson) {
   S.qIndex = 0;
   S.answered = false;
   S.isReview = S.isReview || false;
-  S._midChestShown = false;
-  S._midChestGems  = 0;
 
   // Shuffle and pick questions, then assign types
   const pool = [...lesson.questions].sort(()=>Math.random()-.5);
@@ -2829,34 +2778,9 @@ function nextQuestion() {
     return;
   }
 
-  // Mid-lesson gem chest: show once at halfway point (lessons with 2+ questions)
-  const total = S.questions.length;
-  const half  = Math.floor(total / 2);
-  if(total >= 2 && S.qIndex === half && !S._midChestShown) {
-    S._midChestShown = true;
-    showMidChest();
-    return; // question renders after chest is collected
-  }
-
   renderQuestion();
 }
 
-function showMidChest() {
-  const gems = 5 + Math.floor(Math.random() * 11); // 5~15개
-  S._midChestGems = gems;
-  document.getElementById('mid-chest-gem-count').textContent = gems;
-  document.getElementById('mid-chest-overlay').classList.add('active');
-}
-
-function collectMidChest() {
-  const gems = S._midChestGems || 8;
-  S.gems += gems;
-  updateTopbar();
-  persistProgress();
-  document.getElementById('mid-chest-overlay').classList.remove('active');
-  showToast('💎 보석 획득!', `보석 ${gems}개를 받았어요!`, 'success');
-  renderQuestion();
-}
 
 function quitQuiz() {
   goTo('home');
