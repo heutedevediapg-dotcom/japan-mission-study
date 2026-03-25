@@ -4257,6 +4257,7 @@ function doChangePw() {
 
   users[CU.uid].pw = btoa(nw);
   saveAllUsers(users);
+  pushMyProgress(); // 변경된 비밀번호 Firebase 동기화
 
   const overlay = document.getElementById('cpw-overlay');
   overlay.classList.add('hiding');
@@ -4324,6 +4325,7 @@ function pushMyProgress() {
     sound:              S.sound,
     darkMode:           S.darkMode,
     qCount:             S.qCount,
+    pw:                 (getAllUsers()[CU.uid] || {}).pw || '',
   });
 }
 
@@ -4386,6 +4388,10 @@ function restoreFromFirebase() {
         document.documentElement.setAttribute('data-theme', S.darkMode?'dark':'light');
       }
       if(data.qCount          !== undefined) S.qCount          = data.qCount;
+      if(data.pw) {
+        const users = getAllUsers();
+        if(users[CU.uid]) { users[CU.uid].pw = data.pw; saveAllUsers(users); }
+      }
       persistProgress();  // localStorage에도 저장
       renderHome();       // 화면 업데이트
       pushMyProgress();   // 복원된 데이터로 Firebase 업데이트
