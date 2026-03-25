@@ -454,7 +454,8 @@ body{
 .fill-card{background:linear-gradient(135deg,#fffbeb,#fef3c7);border:2.5px solid #FFD900;border-radius:var(--r);padding:20px;text-align:center;margin:8px 0;}
 .fill-card-label{font-size:11px;font-weight:700;color:#92400e;letter-spacing:.05em;margin-bottom:6px;}
 .fill-card-text{font-size:26px;font-weight:800;color:var(--text);}
-.fill-card-hint{font-size:13px;color:var(--text2);margin-top:6px;}
+.fill-card-hint{font-size:14px;color:#92400e;margin-top:8px;font-weight:600;}
+.fill-card-meaning{font-size:13px;color:var(--text2);margin-top:3px;}
 
 /* ── REVIEW CARD (Home) ───────────────────────── */
 .review-card{background:linear-gradient(135deg,#fff3e0,#ffe0b2);border:2px solid #FF9600;border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:12px;transition:all .15s;-webkit-tap-highlight-color:transparent;}
@@ -1820,13 +1821,6 @@ body{
       </div>
     </div>
 
-    <!-- Categories Section -->
-    <div class="settings-section">
-      <div class="ss-header">📚 학습 카테고리</div>
-      <div class="setting-row" style="flex-wrap:wrap;gap:8px;">
-        <div id="cat-chips" class="chip-group" style="width:100%;padding:4px 0;"></div>
-      </div>
-    </div>
 
     <!-- Display Section -->
     <div class="settings-section">
@@ -2594,7 +2588,7 @@ function assignQuizTypes(questions) {
   return questions.map((q, i) => {
     let type = typeSeq[i % typeSeq.length];
     // arr: 분리 가능한 토큰이 2개 이상이어야 함
-    if (type === 'arr' && tokenizeJp(q.jp).length < 2) type = 'mcq';
+    if (type === 'arr' && (tokenizeJp(q.jp).length < 2 || q.jp.includes('/'))) type = 'mcq';
     // fill: 발음(reading)이 있고 보기(choices)가 일본어여야 함
     if (type === 'fill' && (!q.reading || !isJapaneseText(q.choices[q.correct] || ''))) type = 'mcq';
     // rev: 한국어 의미가 추출 가능하고 일본어와 달라야 함
@@ -2656,9 +2650,35 @@ function renderReviewCard() {
    QUIZ RENDER FUNCTIONS (타입별)
 ═══════════════════════════════════════════ */
 
+// 중복 보기 제거 헬퍼: correct 보기를 유지하고 중복 오답은 다른 문항 풀에서 대체
+function dedupChoices(q) {
+  const choices = [...q.choices];
+  const correct = q.correct;
+  const seen = new Set();
+  seen.add(choices[correct]); // 정답 먼저 등록
+  const pool = LESSONS.flatMap(l => l.questions)
+    .filter(pq => pq.jp !== q.jp)
+    .flatMap(pq => pq.choices)
+    .filter(c => !seen.has(c));
+  let pi = 0;
+  for (let i = 0; i < choices.length; i++) {
+    if (i === correct) continue;
+    if (seen.has(choices[i])) {
+      // 중복 오답 → 풀에서 대체
+      while (pi < pool.length && seen.has(pool[pi])) pi++;
+      choices[i] = pool[pi] || '—';
+      pi++;
+    }
+    seen.add(choices[i]);
+  }
+  return { choices, correct };
+}
+
 function renderMCQ(q) {
   const total = S.questions.length;
   const keys = ['A','B','C','D'];
+  const { choices: dc, correct: dcIdx } = dedupChoices(q);
+  q = Object.assign({}, q, { choices: dc, correct: dcIdx });
   const shuffled = [0,1,2,3].sort(()=>Math.random()-.5);
   const correctChoice = q.choices[q.correct];
   const body = document.getElementById('quiz-body');
@@ -2734,6 +2754,8 @@ function renderReverse(q) {
 function renderFill(q) {
   const total = S.questions.length;
   const keys = ['A','B','C','D'];
+  const { choices: dc, correct: dcIdx } = dedupChoices(q);
+  q = Object.assign({}, q, { choices: dc, correct: dcIdx });
   const shuffled = [0,1,2,3].sort(()=>Math.random()-.5);
   const correctChoice = q.choices[q.correct];
   const body = document.getElementById('quiz-body');
@@ -2744,7 +2766,7 @@ function renderFill(q) {
     <div class="fill-card" onclick="speakJapanese('${jpSafe}',document.getElementById('speak-fill'))">
       <div class="fill-card-label">🔊 탭하여 듣기</div>
       <div class="fill-card-text">${q.reading}</div>
-      <div class="fill-card-hint">${extractKoreanMeaning(q.q) || ''}</div>
+      <div class="fill-card-hint">🇰🇷 ${extractKoreanMeaning(q.q) || q.q}</div>
       <button class="speak-btn" id="speak-fill" style="margin:10px auto 0;display:flex;" onclick="event.stopPropagation();speakJapanese('${jpSafe}',this)">🔊</button>
     </div>
     <div class="quiz-choices" id="choices">
@@ -4070,6 +4092,16 @@ function loginAs(uid, name) {
     S.darkMode=false; S.sound=true; S.qCount=5;
     S.enabledCats=new Set(['greet','intro','faith','mission','lords','creed','gospel','praise']);
   }
+  // 선교대원 2호: 교회 생활(day21)부터 시작 — 이전 레슨 자동 완료 처리
+  if (uid === 'japan02') {
+    const startFrom = 'day21';
+    const startIdx = JOURNEY_ORDER.indexOf(startFrom);
+    if (startIdx > 0) {
+      for (let i = 0; i < startIdx; i++) S.allCompleted.add(JOURNEY_ORDER[i]);
+      persistProgress();
+    }
+  }
+
   updateTopbarUser();
   document.querySelector('.bottom-nav').style.display = 'flex';
   document.getElementById('screen-auth').classList.remove('active');
