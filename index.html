@@ -2313,12 +2313,16 @@ function renderJourney() {
             : `showToast('🔒 잠겨있어요!', '앞의 레슨을 모두 완료하면 열려요!', 'warning')`;
         const pgEl = document.createElement('div');
         pgEl.className = 'path-gem-row';
-        pgEl.innerHTML = `
-          <div class="path-gem-chest ${pgState}" onclick="${pgClick}">
-            <div class="path-gem-icon">${chestSVG(pgState)}</div>
-            <div class="path-gem-label">${pgOpened ? '획득 완료' : pgUnlocked ? '열기!' : '🔒 잠김'}</div>
-          </div>
-        `;
+        const pgDiv = document.createElement('div');
+        pgDiv.className = `path-gem-chest ${pgState}`;
+        pgDiv.innerHTML = `<div class="path-gem-icon">${chestSVG(pgState)}</div><div class="path-gem-label">${pgOpened ? '획득 완료' : pgUnlocked ? '열기!' : '🔒 잠김'}</div>`;
+        if (!pgOpened) {
+          pgDiv.addEventListener('click', () => {
+            if (pgUnlocked) collectPathChest(pgId);
+            else showToast('🔒 잠겨있어요!', '앞의 레슨을 모두 완료하면 열려요!', 'warning');
+          });
+        }
+        pgEl.appendChild(pgDiv);
         wrap.appendChild(pgEl);
       }
     });
@@ -2417,7 +2421,7 @@ function assignQuizTypes(questions) {
     // arr: 분리 가능한 토큰이 2개 이상이어야 함
     if (type === 'arr' && tokenizeJp(q.jp).length < 2) type = 'mcq';
     // fill: 발음(reading)이 있고 보기(choices)가 일본어여야 함
-    if (type === 'fill' && (!q.reading || !q.choices.some(c => isJapaneseText(c)))) type = 'mcq';
+    if (type === 'fill' && (!q.reading || !isJapaneseText(q.choices[q.correct] || ''))) type = 'mcq';
     // rev: 한국어 의미가 추출 가능하고 일본어와 달라야 함
     if (type === 'rev') {
       const m = extractKoreanMeaning(q.q);
