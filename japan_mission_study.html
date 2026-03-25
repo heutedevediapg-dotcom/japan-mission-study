@@ -4020,8 +4020,27 @@ function doLogin() {
   if(!id || !pw){ showAuthError('login','아이디와 비밀번호를 입력해주세요.'); return; }
   const users = getAllUsers();
   if(!users[id]){ showAuthError('login','등록되지 않은 아이디예요.'); return; }
-  if(users[id].pw !== btoa(pw)){ showAuthError('login','비밀번호가 틀렸어요.'); return; }
-  loginAs(id, users[id].name);
+  if(users[id].pw === btoa(pw)){
+    loginAs(id, users[id].name);
+    return;
+  }
+  // 로컬 비밀번호 불일치 → Firebase에서 최신 비밀번호 확인 (다른 기기에서 변경한 경우)
+  initFirebase();
+  if(_db) {
+    _db.ref(`team/${id}/pw`).once('value', snap => {
+      const fbPw = snap.val();
+      if(fbPw && fbPw === btoa(pw)) {
+        // Firebase에 저장된 비밀번호와 일치 → 로컬 업데이트 후 로그인
+        users[id].pw = fbPw;
+        saveAllUsers(users);
+        loginAs(id, users[id].name);
+      } else {
+        showAuthError('login','비밀번호가 틀렸어요.');
+      }
+    });
+  } else {
+    showAuthError('login','비밀번호가 틀렸어요.');
+  }
 }
 
 // ── Core login ───────────────────────────────
