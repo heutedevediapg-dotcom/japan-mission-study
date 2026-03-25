@@ -3577,10 +3577,12 @@ function startEditName() {
   const input = document.getElementById('profile-name-input');
   // 기본 이름("선교대원 N호") 형식이면 빈칸으로 시작 → 실수로 "호" 남는 것 방지
   const isDefaultName = /^선교대원\s*\d+\s*호$/.test(CU.name.trim());
+  input.value = '';  // 항상 초기화 후 설정 (모바일 잔류값 방지)
   input.value = isDefaultName ? '' : CU.name;
   document.getElementById('profile-name-input-row').style.display = 'flex';
   document.getElementById('profile-edit-name-btn').style.display = 'none';
   input.focus();
+  input.select();
 }
 
 function cancelEditName() {
@@ -3589,9 +3591,13 @@ function cancelEditName() {
 }
 
 function saveEditName() {
-  const newName = document.getElementById('profile-name-input').value.trim();
+  let newName = document.getElementById('profile-name-input').value.trim();
   if(!newName) { showToast('⚠️ 이름을 입력해주세요', '', 'warning'); return; }
   if(newName.length > 20) { showToast('⚠️ 20자 이내로 입력해주세요', '', 'warning'); return; }
+  // 기본 이름("선교대원 N호")에서 변경 시 실수로 "호"만 남는 경우 제거
+  const wasDefault = /^선교대원\s*\d+\s*호$/.test(CU.name.trim());
+  if(wasDefault && newName === '호') newName = '';
+  if(!newName) { showToast('⚠️ 이름을 입력해주세요', '', 'warning'); return; }
 
   // localStorage 업데이트
   const users = getAllUsers();
@@ -3728,7 +3734,8 @@ function restoreFromFirebase() {
         S.streak = data.streak || 0;
         S.lastStreakDate = lastStreakDate;
       }
-      S.todayXP = (lastStudied === today) ? (data.todayXP || 0) : 0;
+      const lastStudiedDate = data.lastStudied || lastStreakDate || '';
+      S.todayXP = (lastStudiedDate === today) ? (data.todayXP || 0) : 0;
       persistProgress();  // localStorage에도 저장
       renderHome();       // 화면 업데이트
       pushMyProgress();   // 복원된 데이터로 Firebase 업데이트
