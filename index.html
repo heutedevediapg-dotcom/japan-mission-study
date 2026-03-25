@@ -2318,6 +2318,7 @@ function pgchClaim() {
   S.gems += _pgchGems;
   updateTopbar();
   persistProgress();
+  pushMyProgress();
   document.getElementById('pgch-overlay').classList.remove('active');
   renderHome();
   showToast('💎 보석 획득!', `보석 ${_pgchGems}개를 받았어요!`, 'success');
