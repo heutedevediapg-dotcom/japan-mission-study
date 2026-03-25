@@ -1869,9 +1869,12 @@ body{
     <!-- Reset My Data -->
     <div class="settings-section">
       <div class="ss-header">⚠️ 데이터 관리</div>
-      <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
-        <div style="font-size:13px;color:var(--text2);line-height:1.5;">내 학습 데이터(XP, 스트릭, 진행도 등)를 초기화합니다.<br>이 작업은 되돌릴 수 없어요.</div>
-        <button onclick="resetMyData()" style="padding:10px 18px;border-radius:10px;border:none;background:#FF4B4B;color:#fff;font-size:14px;font-weight:800;cursor:pointer;">🗑️ 내 데이터 초기화</button>
+      <div class="setting-row" style="align-items:center;justify-content:space-between;">
+        <div class="sr-left">
+          <div class="sr-label">내 데이터 초기화</div>
+          <div class="sr-sub">XP·스트릭·진행도 전체 삭제 (복구 불가)</div>
+        </div>
+        <button onclick="resetMyData()" style="flex-shrink:0;padding:8px 14px;border-radius:10px;border:none;background:#FF4B4B;color:#fff;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;">🗑️ 초기화</button>
       </div>
     </div>
 
