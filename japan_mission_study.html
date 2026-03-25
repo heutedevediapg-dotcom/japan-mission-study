@@ -4092,6 +4092,16 @@ function loginAs(uid, name) {
     S.darkMode=false; S.sound=true; S.qCount=5;
     S.enabledCats=new Set(['greet','intro','faith','mission','lords','creed','gospel','praise']);
   }
+  // 선교대원 2호: 교회 생활(day21)부터 시작 — 이전 레슨 자동 완료 처리
+  if (uid === 'japan02') {
+    const startFrom = 'day21';
+    const startIdx = JOURNEY_ORDER.indexOf(startFrom);
+    if (startIdx > 0) {
+      for (let i = 0; i < startIdx; i++) S.allCompleted.add(JOURNEY_ORDER[i]);
+      persistProgress();
+    }
+  }
+
   updateTopbarUser();
   document.querySelector('.bottom-nav').style.display = 'flex';
   document.getElementById('screen-auth').classList.remove('active');
