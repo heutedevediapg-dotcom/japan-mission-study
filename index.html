@@ -2811,13 +2811,129 @@ function speakJapanese(text, btnEl) {
    QUIZ TYPE HELPERS
 ═══════════════════════════════════════════ */
 
-// 일본어 텍스트를 타일로 분리 (배열 퀴즈용)
+// 일본어 텍스트를 문법 단위(주어/목적어/서술어 등)로 분리 (배열 퀴즈용)
 function tokenizeJp(jp) {
+  // 공백이 있으면 공백 기준 분리
   const bySpace = jp.split(/\s+/).filter(Boolean);
   if (bySpace.length >= 2) return bySpace;
   if (jp.length <= 3) return [jp];
-  const mid = Math.ceil(jp.length / 2);
-  return [jp.slice(0, mid), jp.slice(mid)];
+
+  // ── 관용구 고정 분할 (조사 오탐 방지) ──
+  const FIXED = {
+    'ありがとうございます':  ['ありがとう','ございます'],
+    'どうもありがとうございます': ['どうもありがとう','ございます'],
+    'おはようございます':   ['おはよう','ございます'],
+    'よろしくお願いします': ['よろしく','お願いします'],
+    'よろしくお願いいたします': ['よろしく','お願いいたします'],
+    'どういたしまして':     ['どういたし','まして'],
+    'はじめまして':         ['はじめ','まして'],
+    'おやすみなさい':       ['おやすみ','なさい'],
+    'いただきます':         ['いただき','ます'],
+    'ごちそうさまでした':   ['ごちそうさま','でした'],
+    'おかげさまで元気です': ['おかげさまで','元気です'],
+    'もう一度言っていただけますか': ['もう一度','言っていただけますか'],
+    'ゆっくり話してください': ['ゆっくり','話してください'],
+    'ちょっと待ってください': ['ちょっと','待ってください'],
+    'ちょっとよろしいですか': ['ちょっと','よろしいですか'],
+    '申し訳ありません':     ['申し訳','ありません'],
+  };
+  if (FIXED[jp]) return FIXED[jp];
+
+  // ── 문말 표현 목록 (긴 것부터 먼저) ──
+  const ENDINGS = [
+    'ませんでした','ではありません','ではないです','ていませんでした',
+    'いませんでした','いませんか','いました','いますか','いません','います',
+    'ていません','ていますか','ています','ていました','てください','てみます','てしまいます',
+    'てもいいですか','ましょうか','ましょう','でしょうか','でしょう',
+    'なさい','ください','お願いします','お願いいたします',
+    'ませんか','でしたか','ましたか',
+    'でした','ません','ました','ますか','ますね','ますよ','ます',
+    'ですか','ですね','ですよ','です',
+  ];
+
+  // ── 조사 패턴 (긴 복합조사부터) ──
+  const PARTICLE_RE = /(について|によって|において|に対して|として|ながら|には|では|とは|ては|でも|ても|から|まで|より|は|が|を|に|へ|も|や)/g;
+
+  // 조사 끝 판별용 (문말과 결합 금지)
+  const PARTICLE_END_RE = /(については|によって|において|に対して|として|ながら|には|では|とは|ては|でも|ても|から|まで|より|は|が|を|に|へ|も|や)$/;
+
+  // 1. 문말 표현 검출 (뒤에서부터)
+  let prefix = jp;
+  let endingFound = '';
+  for (const e of ENDINGS) {
+    if (jp.endsWith(e) && jp.length > e.length) {
+      prefix = jp.slice(0, jp.length - e.length);
+      endingFound = e;
+      break;
+    }
+  }
+
+  // 2. prefix를 조사 경계로 분할 (조사 앞에 1자 이상 필요)
+  const tokens = [];
+  let lastIdx = 0;
+  let m;
+  PARTICLE_RE.lastIndex = 0;
+  while ((m = PARTICLE_RE.exec(prefix)) !== null) {
+    const splitAt = m.index + m[0].length;
+    if (m.index >= 1) {  // 조사 앞에 최소 1글자
+      tokens.push(prefix.slice(lastIdx, splitAt));
+      lastIdx = splitAt;
+    }
+  }
+  if (lastIdx < prefix.length) tokens.push(prefix.slice(lastIdx));
+
+  // 3. 문말 표현 처리
+  if (endingFound) {
+    if (tokens.length === 0) {
+      tokens.push(endingFound);
+    } else {
+      const last = tokens[tokens.length - 1];
+      const lastCh = last[last.length - 1];
+      const isHira = c => c >= 'ぁ' && c <= 'ん';
+      const endsWithParticle = PARTICLE_END_RE.test(last);
+      // 동사 어간(히라가나로 끝나고 4자 이하, 조사로 끝나지 않음) → 문말과 결합
+      if (!endsWithParticle && isHira(lastCh) && last.length <= 4) {
+        tokens[tokens.length - 1] += endingFound;
+      } else {
+        tokens.push(endingFound);
+      }
+    }
+  }
+
+  // 4. 후처리: 1글자 단독 토큰은 다음 토큰과 합체 (来+ました → 来ました)
+  const merged = [];
+  let i = 0;
+  while (i < tokens.length) {
+    if (tokens[i].length === 1 && i + 1 < tokens.length) {
+      merged.push(tokens[i] + tokens[i + 1]);
+      i += 2;
+    } else {
+      merged.push(tokens[i]);
+      i++;
+    }
+  }
+  const result = merged.length >= 2 ? merged : tokens;
+
+  // 5. 여전히 1개 이하면 히라가나↔한자 경계 기준 분할 → 최후 중간 분할
+  if (result.length < 2) {
+    const boundaries = [];
+    for (let bi = 1; bi < jp.length; bi++) {
+      const p = jp[bi-1], c = jp[bi];
+      const pHira = (p >= 'ぁ' && p <= 'ん') || (p >= 'ァ' && p <= 'ン');
+      const cKanji = c >= '\u4e00' && c <= '\u9fff';
+      const pKanji = p >= '\u4e00' && p <= '\u9fff';
+      const cHira = (c >= 'ぁ' && c <= 'ん') || (c >= 'ァ' && c <= 'ン');
+      if ((pHira && cKanji) || (pKanji && cHira)) boundaries.push(bi);
+    }
+    if (boundaries.length > 0) {
+      const mid2 = boundaries[Math.floor(boundaries.length / 2)];
+      return [jp.slice(0, mid2), jp.slice(mid2)];
+    }
+    const mid = Math.ceil(jp.length / 2);
+    return [jp.slice(0, mid), jp.slice(mid)];
+  }
+
+  return result;
 }
 
 // 문제 텍스트에서 한국어 의미 추출 (역방향 퀴즈용)
