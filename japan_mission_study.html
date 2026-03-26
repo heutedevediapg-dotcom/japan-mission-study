@@ -786,7 +786,7 @@ body{
   font-size:14px;font-weight:800;color:#fff;flex-shrink:0;
 }
 .rank-info{flex:1;min-width:0;}
-.rank-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rank-name{font-size:13px;font-weight:700;word-break:keep-all;}
 .rank-sub{font-size:11px;color:var(--text2);margin-top:1px;}
 .rank-xp{font-size:14px;font-weight:800;color:var(--green);flex-shrink:0;}
 .rank-xp.zero{color:var(--text2);}
@@ -5184,8 +5184,8 @@ function renderRankList(members, activeReqs = new Set()) {
       <div class="rank-num ${numClass}">${rank}</div>
       <div class="rank-avatar" style="background:${color}">${initial}</div>
       <div class="rank-info">
-        <div class="rank-name">${m.isMe ? '⭐ ' + m.name + ' (나)' : m.name}${reqBadge}</div>
-        <div class="rank-sub">🔥 ${m.streak}일 연속 · 오늘 ${m.todayXP} XP</div>
+        <div class="rank-name">${m.isMe ? '⭐ ' + m.name + ' (나)' : m.name}</div>
+        <div class="rank-sub">🔥 ${m.streak}일 연속 · 오늘 ${m.todayXP} XP${reqBadge ? ' ' + reqBadge : ''}</div>
       </div>
       <div class="rank-xp ${m.xp===0?'zero':''}${m.isMe?' rank-xp-me':''}">${m.xp} XP</div>
       ${actionBtn}
