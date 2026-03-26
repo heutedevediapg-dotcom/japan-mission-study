@@ -51,12 +51,10 @@ body{
   position:fixed;top:0;left:0;right:0;bottom:0;
   z-index:50;
   background:var(--bg);
-  overflow-y:auto;overflow-x:hidden;
-  -webkit-overflow-scrolling:touch;
   display:none;
   flex-direction:column;
 }
-#screen-quiz.active{display:block;}
+#screen-quiz.active{display:flex;}
 
 /* ── TOP BAR ─────────────────────────────────── */
 .topbar{
@@ -389,14 +387,20 @@ body{
   padding:14px 16px;display:flex;align-items:center;gap:12px;
   background:var(--bg);border-bottom:1.5px solid var(--border);
   padding-top:max(env(safe-area-inset-top), 14px);
-  position:sticky;top:0;z-index:10;
+  flex-shrink:0;
 }
 .quiz-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text2);}
 .quiz-progress-wrap{flex:1;background:var(--bg3);border-radius:99px;height:8px;overflow:hidden;}
 .quiz-progress-bar{height:100%;border-radius:99px;background:var(--green);transition:width .4s ease;}
 .quiz-hearts{display:flex;gap:4px;font-size:16px;}
 
-.quiz-body{display:flex;flex-direction:column;padding:24px 20px max(env(safe-area-inset-bottom),20px);gap:20px;min-height:calc(100vh - 80px);}
+.quiz-body{
+  flex:1;min-height:0;
+  overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  display:flex;flex-direction:column;
+  padding:24px 20px 20px;gap:20px;
+}
 .quiz-prompt{font-size:13px;font-weight:600;color:var(--text2);}
 .quiz-question{font-size:22px;font-weight:800;line-height:1.4;}
 .quiz-jp{font-size:17px;color:var(--text2);margin-top:4px;}
@@ -432,11 +436,21 @@ body{
 .fb-title.w{color:var(--red);}
 .fb-ans{font-size:14px;font-weight:600;color:var(--text);}
 
+/* 퀴즈 하단 고정 푸터 */
+#quiz-footer{
+  display:none;
+  padding:12px 20px;
+  padding-bottom:max(env(safe-area-inset-bottom), 12px);
+  background:var(--bg);
+  border-top:1.5px solid var(--border);
+  flex-shrink:0;
+}
+#quiz-footer.show{display:block;}
+
 .quiz-continue-btn{
-  margin-top:12px;padding:16px;border-radius:var(--r);
+  width:100%;padding:16px;border-radius:var(--r);
   border:none;font-size:16px;font-weight:800;
   cursor:pointer;transition:all .15s;letter-spacing:.01em;
-  flex-shrink:0;
 }
 .quiz-continue-btn.green{background:var(--green);color:#fff;}
 .quiz-continue-btn.green:active{background:var(--green-dk);}
@@ -1613,6 +1627,9 @@ body{
     <div class="quiz-hearts" id="quiz-hearts-display"></div>
   </div>
   <div class="quiz-body" id="quiz-body"></div>
+  <div id="quiz-footer">
+    <button id="continue-btn" class="quiz-continue-btn green" onclick="nextQuestion()">계속하기</button>
+  </div>
 </div>
 
 <!-- ══════════════════ RESULT SCREEN ══════════════════ -->
@@ -3090,8 +3107,7 @@ function renderMCQ(q) {
           <span class="choice-key">${keys[i]}</span>${q.choices[origIdx]}
         </button>`).join('')}
     </div>
-    <div class="quiz-feedback" id="feedback"></div>
-    <button class="quiz-continue-btn green" id="continue-btn" style="display:none;" onclick="nextQuestion()">계속하기</button>`;
+    <div class="quiz-feedback" id="feedback"></div>`;
   if(document.activeElement) document.activeElement.blur();
 }
 
@@ -3134,8 +3150,7 @@ function renderReverse(q) {
           <span class="choice-key">${keys[i]}</span>${c}
         </button>`).join('')}
     </div>
-    <div class="quiz-feedback" id="feedback"></div>
-    <button class="quiz-continue-btn green" id="continue-btn" style="display:none;" onclick="nextQuestion()">계속하기</button>`;
+    <div class="quiz-feedback" id="feedback"></div>`;
   if(document.activeElement) document.activeElement.blur();
   // 역방향 타입은 자동 재생 (듣고 뜻 맞추기)
   setTimeout(() => speakJapanese(q.jp, document.getElementById('speak-rev')), 400);
@@ -3165,8 +3180,7 @@ function renderFill(q) {
           <span class="choice-key">${keys[i]}</span>${q.choices[origIdx]}
         </button>`).join('')}
     </div>
-    <div class="quiz-feedback" id="feedback"></div>
-    <button class="quiz-continue-btn green" id="continue-btn" style="display:none;" onclick="nextQuestion()">계속하기</button>`;
+    <div class="quiz-feedback" id="feedback"></div>`;
   if(document.activeElement) document.activeElement.blur();
   // 발음 타입은 자동 재생
   setTimeout(() => speakJapanese(q.jp, document.getElementById('speak-fill')), 400);
@@ -3202,8 +3216,7 @@ function renderArrange(q) {
       ${allTiles.map((t,i)=>`<button class="tile-btn" data-idx="${i}" data-text="${t.replace(/"/g,'&quot;')}" onclick="arrangeTileTap(this)">${t}</button>`).join('')}
     </div>
     <div class="quiz-feedback" id="feedback"></div>
-    <button class="arr-check-btn" id="arr-check" onclick="checkArrange('${jpSafe}')">확인하기</button>
-    <button class="quiz-continue-btn green" id="continue-btn" style="display:none;" onclick="nextQuestion()">계속하기</button>`;
+    <button class="arr-check-btn" id="arr-check" onclick="checkArrange('${jpSafe}')">확인하기</button>`;
   if(document.activeElement) document.activeElement.blur();
 }
 
@@ -3247,6 +3260,7 @@ function checkArrange(correctJp) {
   const userAnswer = placed.map(t=>t.textContent).join('');
   const isCorrect = userAnswer === correctJp;
   const feedback = document.getElementById('feedback');
+  const footer = document.getElementById('quiz-footer');
   const continueBtn = document.getElementById('continue-btn');
   document.querySelectorAll('.tile-btn,.placed-tile').forEach(t=>t.style.pointerEvents='none');
   document.getElementById('arr-check').style.display='none';
@@ -3269,7 +3283,7 @@ function checkArrange(correctJp) {
     addWeakItem(S.lesson.id, S.questions[S.qIndex]);
     setTimeout(()=>speakJapanese(correctJp), 700);
   }
-  feedback.style.display='block'; continueBtn.style.display='block';
+  footer.classList.add('show');
 }
 
 /* ═══════════════════════════════════════════
@@ -3329,6 +3343,7 @@ function selectAnswer(btn, chosen, correct) {
 
   const isCorrect = chosen === correct;
   const feedback = document.getElementById('feedback');
+  const footer = document.getElementById('quiz-footer');
   const continueBtn = document.getElementById('continue-btn');
 
   document.querySelectorAll('.choice-btn').forEach(b=>{
@@ -3364,14 +3379,7 @@ function selectAnswer(btn, chosen, correct) {
     if(isJapaneseText(correct)) setTimeout(()=>speakJapanese(correct), 1200);
   }
 
-  feedback.style.display = 'block';
-  continueBtn.style.display = 'block';
-
-  // 계속하기 버튼이 보이도록 스크롤
-  setTimeout(() => {
-    const qScr = document.getElementById('screen-quiz');
-    if(qScr) qScr.scrollTo({ top: qScr.scrollHeight, behavior: 'smooth' });
-  }, 80);
+  footer.classList.add('show'); // 계속하기 버튼 하단 고정 표시 (스크롤 불필요)
 }
 
 function nextQuestion() {
@@ -3386,6 +3394,12 @@ function nextQuestion() {
     showResult(true);
     return;
   }
+
+  // 새 문제 시작 시 footer 숨기고 스크롤 초기화
+  const footer = document.getElementById('quiz-footer');
+  if(footer) footer.classList.remove('show');
+  const body = document.getElementById('quiz-body');
+  if(body) body.scrollTop = 0;
 
   renderQuestion();
 }
