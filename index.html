@@ -5314,19 +5314,36 @@ function closeNudge(e) {
 /* ═══════════════════════════════════════════
    INIT
 ═══════════════════════════════════════════ */
-/* iOS rubber-band 방지: 퀴즈 화면 스크롤 경계에서 기본 bounce 차단 */
-function initQuizScrollFix() {
-  const el = document.getElementById('screen-quiz');
-  if(!el) return;
+/* iOS rubber-band 방지: 모든 스크롤 영역의 경계 bounce 차단 */
+function initScrollBounceFix() {
   let startY = 0;
-  el.addEventListener('touchstart', e => {
+
+  // 터치 대상에서 가장 가까운 스크롤 가능 조상 찾기
+  function findScroller(el) {
+    while(el && el !== document.documentElement) {
+      const ov = window.getComputedStyle(el).overflowY;
+      if((ov === 'auto' || ov === 'scroll') && el.scrollHeight > el.clientHeight) {
+        return el;
+      }
+      el = el.parentElement;
+    }
+    return null;
+  }
+
+  document.addEventListener('touchstart', e => {
     startY = e.touches[0].clientY;
   }, { passive: true });
-  el.addEventListener('touchmove', e => {
+
+  document.addEventListener('touchmove', e => {
+    const scroller = findScroller(e.target);
     const dy = e.touches[0].clientY - startY;
-    const atTop    = el.scrollTop <= 0;
-    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
-    // 맨 위에서 아래로 당기거나, 맨 아래에서 위로 당기면 기본 동작(bounce) 차단
+    if(!scroller) {
+      // 스크롤 영역 없음 → body bounce 완전 차단
+      e.preventDefault();
+      return;
+    }
+    const atTop    = scroller.scrollTop <= 0;
+    const atBottom = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 1;
     if((atTop && dy > 0) || (atBottom && dy < 0)) {
       e.preventDefault();
     }
@@ -5336,7 +5353,7 @@ function initQuizScrollFix() {
 function init() {
   seedPresetAccounts();
   registerStudySW();   // 서비스 워커 등록
-  initQuizScrollFix(); // iOS 퀴즈 스크롤 bounce 방지
+  initScrollBounceFix(); // iOS 스크롤 bounce 방지 (전체 화면 적용)
 
   // Check for existing session
   const sessionUid = getCurrentSession();
