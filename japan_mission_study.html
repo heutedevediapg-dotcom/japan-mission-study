@@ -4910,8 +4910,8 @@ function renderFlightTrack(members) {
   // 시작하지 않은 사람(xp=0) 제외
   const active = members.filter(m => m.xp > 0);
 
-  // 상위 5명 + 나 표시
-  const toShow = active.slice(0, 5);
+  // 상위 10명 + 나 표시
+  const toShow = active.slice(0, 10);
   if(!toShow.find(m=>m.isMe) && active.find(m=>m.isMe)) {
     toShow.push(active.find(m=>m.isMe));
   }
