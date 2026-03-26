@@ -5041,8 +5041,8 @@ function renderFlightTrack(members) {
   // 시작하지 않은 사람(xp=0) 제외
   const active = members.filter(m => m.xp > 0);
 
-  // 상위 10명 + 나 표시
-  const toShow = active.slice(0, 10);
+  // 상위 5명 + 나 표시
+  const toShow = active.slice(0, 5);
   if(!toShow.find(m=>m.isMe) && active.find(m=>m.isMe)) {
     toShow.push(active.find(m=>m.isMe));
   }
@@ -5054,11 +5054,11 @@ function renderFlightTrack(members) {
     rank: members.indexOf(m) + 1,
   })).sort((a, b) => a.pct - b.pct);
 
-  // 5% 이내 근접 비행기 그룹화
+  // 3% 이내 근접 비행기 그룹화 (겹침 방지, 단 각 순위 모두 표시)
   const groups = [];
   planes.forEach(p => {
     const last = groups[groups.length - 1];
-    if(last && Math.abs(last.pct - p.pct) <= 5) {
+    if(last && Math.abs(last.pct - p.pct) <= 3) {
       last.items.push(p);
     } else {
       groups.push({ pct: p.pct, items: [p] });
@@ -5073,13 +5073,17 @@ function renderFlightTrack(members) {
       label = g.items[0].m.isMe ? '나' : g.items[0].rank + '위';
       nameLabel = g.items[0].m.name || '';
     } else {
+      // 그룹 내 모든 순위 표시 (예: 3·4위)
       const nonMeRanks = g.items.filter(p => !p.m.isMe).map(p => p.rank + '위');
-      if(isMe && nonMeRanks.length > 0) label = nonMeRanks[0] + ' 또는 나';
+      const rankStr = nonMeRanks.join('·');
+      if(isMe && nonMeRanks.length > 0) label = rankStr + '·나';
       else if(isMe) label = '나';
-      else label = nonMeRanks[0];
-      // 그룹이면 첫 번째 이름 + 인원수
+      else label = rankStr;
+      // 이름: 최대 2명까지 표시
       const names = g.items.map(p => p.m.name || '').filter(Boolean);
-      nameLabel = names.length > 1 ? `${names[0]} 외 ${names.length - 1}` : (names[0] || '');
+      nameLabel = names.length > 2
+        ? `${names[0]}·${names[1]} 외 ${names.length - 2}`
+        : names.join('·');
     }
     const div = document.createElement('div');
     div.className = `flight-plane${isMe?' me':''}`;
