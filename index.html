@@ -3306,6 +3306,7 @@ function startLesson(lesson) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-quiz').classList.add('active');
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.bottom-nav').style.display = 'none'; // 퀴즈 중 네비 숨김
 
   renderQuestion();
 }
@@ -3406,6 +3407,7 @@ function nextQuestion() {
 
 
 function quitQuiz() {
+  document.querySelector('.bottom-nav').style.display = 'flex';
   goTo('home');
 }
 
@@ -3430,6 +3432,7 @@ function checkDailyFirst(xpEarned) {
 }
 
 function showResult(finished) {
+  document.querySelector('.bottom-nav').style.display = 'flex'; // 퀴즈 종료 시 네비 복원
   const total = S.questions.length;
   const xpEarned = finished ? Math.round((S.score/total)*20 + 10) : Math.round((S.score/total)*10);
   S.xp += xpEarned;
