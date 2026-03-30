@@ -3312,8 +3312,9 @@ function showWordPopup(el, surface, reading, meaning) {
 }
 
 function hideWordPopup() {
-  document.getElementById('word-popup').classList.remove('show');
-  document.querySelectorAll('.jp-word.tapped,.rev-jp-word.tapped').forEach(e => e.classList.remove('tapped'));
+  const popup = document.getElementById('word-popup');
+  if (popup) popup.classList.remove('show');
+  document.querySelectorAll('.jp-word.tapped,.rev-jp-word.tapped').forEach(el => el.classList.remove('tapped'));
 }
 
 function buildJpWordSpans(jp, showPron, pronMode, wordCls, furiCls, textCls, rowCls) {
@@ -5696,8 +5697,10 @@ function init() {
 
   // 단어 팝업 외부 클릭 시 닫기
   document.addEventListener('click', e => {
-    if (!e.target.closest('.jp-word,.rev-jp-word')) hideWordPopup();
-  }, true);
+    try {
+      if (!e.target.closest('.jp-word,.rev-jp-word')) hideWordPopup();
+    } catch(_) {}
+  }, false);
 
   // Check for existing session
   const sessionUid = getCurrentSession();
