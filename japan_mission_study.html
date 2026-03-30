@@ -1712,7 +1712,6 @@ body{
         <button class="auth-btn" onclick="doLogin()">로그인</button>
       </div>
     </div>
-    <button class="auth-guest-btn" onclick="openKanaMaster()">📖 문자 마스터 — 로그인 없이 시작</button>
   </div>
 </div>
 
@@ -2309,7 +2308,7 @@ body{
 <!-- ══════════════════ KANA MASTER SCREEN ══════════════════ -->
 <div class="screen" id="screen-kana" style="overflow-y:auto;">
   <div class="kana-header">
-    <button class="kana-back-btn" onclick="closeKanaMaster()">←</button>
+    <button class="kana-back-btn" id="kana-back-btn" onclick="closeKanaMaster()">←</button>
     <span class="kana-title">📖 문자 마스터</span>
   </div>
   <div class="kana-cat-tabs">
@@ -2336,6 +2335,9 @@ body{
   </button>
   <button class="nav-btn" id="nav-settings" onclick="goTo('settings')">
     <span class="nav-icon">⚙️</span>설정
+  </button>
+  <button class="nav-btn" id="nav-kana" onclick="openKanaMaster()">
+    <span class="nav-icon">📖</span>문자
   </button>
 </div>
 
@@ -2396,13 +2398,14 @@ function goTo(name) {
   if(nb) nb.classList.add('active');
   // Hide bottom nav on auth screen
   const nav = document.querySelector('.bottom-nav');
-  if(nav) nav.style.display = name === 'auth' ? 'none' : 'flex';
+  const hideNav = name === 'auth' || (name === 'kana' && !(CU && CU.uid));
+  if(nav) nav.style.display = hideNav ? 'none' : 'flex';
   syncNavPadding();
-  if(nav) nav.style.display = (name === 'auth' || name === 'kana') ? 'none' : 'flex';
   if(name==='home') { renderHome(); updateTopbarUser(); }
   if(name==='stats') renderStats();
   if(name==='settings') renderSettings();
   if(name==='team') renderTeam();
+  if(name==='kana') renderKanaTable();
 }
 
 /* ═══════════════════════════════════════════
@@ -2450,11 +2453,13 @@ let _kanaPrevScreen = 'auth';
 let _kanaQuiz = null;
 
 function openKanaMaster() {
-  _kanaPrevScreen = CU && CU.uid ? 'home' : 'auth';
+  _kanaPrevScreen = 'home';
   _kanaCategory = 'hiragana';
   _kanaMode = 'table';
+  // 로그인 상태에서만 접근 가능 — 뒤로가기 버튼 숨김 (하단 내비로 이동)
+  const backBtn = document.getElementById('kana-back-btn');
+  if (backBtn) backBtn.style.display = 'none';
   goTo('kana');
-  renderKanaTable();
 }
 
 function closeKanaMaster() { goTo(_kanaPrevScreen); }
