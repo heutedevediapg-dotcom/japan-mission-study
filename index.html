@@ -38,6 +38,8 @@ body{
   font-family:-apple-system,'Hiragino Kaku Gothic Pro','Yu Gothic UI','Malgun Gothic',sans-serif;
   background:var(--bg);color:var(--text);
   display:flex;flex-direction:column;height:100vh;max-height:100vh;
+  padding-top:max(env(safe-area-inset-top), 50px);
+  padding-bottom:60px; /* fallback; overridden by JS syncNavPadding() */
   padding-top:env(safe-area-inset-top);
   padding-bottom:calc(36px + env(safe-area-inset-bottom));
   transition:background .3s,color .3s;
@@ -433,9 +435,10 @@ body{
   text-align:left;transition:all .15s;
   display:flex;align-items:center;gap:10px;
 }
-.choice-btn:not(.disabled):hover{border-color:var(--blue);background:var(--blue-lt);}
+@media(hover:hover){.choice-btn:not(.disabled):hover{border-color:var(--blue);background:var(--blue-lt);}}
+@media(hover:hover){[data-theme="dark"] .choice-btn:not(.disabled):hover{background:#0d2a3a;color:#7dd8fd;}}
 .choice-btn:focus{outline:none;}
-.choice-btn:focus:not(:focus-visible){border-color:var(--border);background:#fff;}
+.choice-btn:focus:not(:focus-visible){border-color:var(--border);background:var(--bg);color:var(--text);}
 .choice-btn.correct{border-color:var(--green);background:var(--green-lt);color:var(--green-dk);}
 .choice-btn.wrong{border-color:var(--red);background:var(--red-lt);color:var(--red);}
 .choice-btn.disabled{cursor:not-allowed;}
@@ -452,6 +455,12 @@ body{
 .quiz-feedback.show{display:block;}
 .quiz-feedback.correct-fb{background:var(--green-lt);border:2px solid var(--green);}
 .quiz-feedback.wrong-fb{background:var(--red-lt);border:2px solid var(--red);}
+[data-theme="dark"] .quiz-feedback.correct-fb{background:#0f2a10;border-color:var(--green);}
+[data-theme="dark"] .quiz-feedback.wrong-fb{background:#2a0f0f;border-color:var(--red);}
+[data-theme="dark"] .rev-jp-card{background:linear-gradient(135deg,#0c2a3a,#102a3a);border-color:#1CB0F6;}
+[data-theme="dark"] .fill-card{background:linear-gradient(135deg,#2a2400,#221c00);border-color:#FFD900;}
+[data-theme="dark"] .fill-card-label,[data-theme="dark"] .fill-card-hint,[data-theme="dark"] .fill-card .speak-hint{color:#fbbf24;}
+[data-theme="dark"] .placed-tile{background:#0d2a3a;}
 .fb-title{font-size:16px;font-weight:800;margin-bottom:4px;}
 .fb-title.c{color:var(--green-dk);}
 .fb-title.w{color:var(--red);}
@@ -2323,6 +2332,15 @@ const S = {
 /* ═══════════════════════════════════════════
    SCREEN NAVIGATION
 ═══════════════════════════════════════════ */
+function syncNavPadding() {
+  const nav = document.querySelector('.bottom-nav');
+  if(nav && nav.style.display !== 'none') {
+    document.body.style.paddingBottom = nav.offsetHeight + 'px';
+  } else {
+    document.body.style.paddingBottom = '0px';
+  }
+}
+window.addEventListener('resize', syncNavPadding);
 function goTo(name) {
   if(name === 'quiz') return;
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -2332,6 +2350,8 @@ function goTo(name) {
   if(nb) nb.classList.add('active');
   // Hide bottom nav on auth screen
   const nav = document.querySelector('.bottom-nav');
+  if(nav) nav.style.display = name === 'auth' ? 'none' : 'flex';
+  syncNavPadding();
   if(nav) nav.style.display = (name === 'auth' || name === 'kana') ? 'none' : 'flex';
   if(name==='home') { renderHome(); updateTopbarUser(); }
   if(name==='stats') renderStats();
@@ -3532,7 +3552,7 @@ function checkArrange(correctJp) {
   document.querySelectorAll('.tile-btn,.placed-tile').forEach(t=>t.style.pointerEvents='none');
   document.getElementById('arr-check').style.display='none';
   if (isCorrect) {
-    placed.forEach(t=>{ t.style.borderColor='var(--green)'; t.style.background='var(--green-lt)'; });
+    placed.forEach(t=>{ t.style.borderColor='var(--green)'; t.style.background='var(--green-lt)'; t.style.color='var(--green-dk)'; });
     S.score++;
     playSound('correct');
     feedback.className='quiz-feedback correct-fb show';
@@ -3540,7 +3560,7 @@ function checkArrange(correctJp) {
     continueBtn.className='quiz-continue-btn green';
     removeWeakItem(correctJp);
   } else {
-    placed.forEach(t=>{ t.style.borderColor='var(--red)'; t.style.background='var(--red-lt)'; });
+    placed.forEach(t=>{ t.style.borderColor='var(--red)'; t.style.background='var(--red-lt)'; t.style.color='var(--red)'; });
     S.quizHearts=Math.max(0,S.quizHearts-1); S.hearts=Math.max(0,S.hearts-1);
     playSound('wrong');
     feedback.className='quiz-feedback wrong-fb show';
