@@ -5115,8 +5115,10 @@ function pushMyProgress() {
   // lastStudied는 실제 학습한 날만 업데이트 (로그인만 해도 today로 덮어쓰지 않음)
   const lastStudied = S.todayXP > 0 ? today : (S.lastStreakDate || '');
   // update() 사용: 명시된 필드만 갱신하고 나머지는 보존 (set()은 전체 덮어쓰기로 데이터 손실 위험)
+  // 기본 닉네임(선교대원 X호)은 Firebase에 올리지 않음 → 관리자가 설정한 커스텀 이름 보존
+  const isDefaultName = /^선교대원\s*\d+\s*호$/.test(CU.name.trim());
   _db.ref(`team/${CU.uid}`).update({
-    name:           CU.name,
+    ...(isDefaultName ? {} : {name: CU.name}),
     xp:             S.xp,
     todayXP:        S.todayXP,
     streak:         S.streak,
