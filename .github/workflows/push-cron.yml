@@ -1,0 +1,23 @@
+name: 메구미 푸시 알림 크론
+
+on:
+  schedule:
+    # 매 5분마다 실행 (GitHub Actions 최소 단위)
+    # KST 시간은 scheduled-push.js 내부에서 변환
+    - cron: '*/5 * * * *'
+  workflow_dispatch:  # 수동 테스트용
+
+jobs:
+  send-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger scheduled push
+        run: |
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X GET \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            "https://jp-push-server.vercel.app/api/scheduled-push")
+          echo "Response: $RESPONSE"
+          if [ "$RESPONSE" != "200" ]; then
+            echo "Warning: Push server returned $RESPONSE"
+          fi

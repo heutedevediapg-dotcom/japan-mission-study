@@ -13,6 +13,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 <script src="./lessons.js"></script>
+<script src="./word_data.js"></script>
 <style>
 :root {
   --green:#58CC02;--green-dk:#46A302;--green-lt:#D7FFB8;
@@ -39,6 +40,8 @@ body{
   display:flex;flex-direction:column;height:100vh;max-height:100vh;
   padding-top:max(env(safe-area-inset-top), 50px);
   padding-bottom:60px; /* fallback; overridden by JS syncNavPadding() */
+  padding-top:env(safe-area-inset-top);
+  padding-bottom:calc(36px + env(safe-area-inset-bottom));
   transition:background .3s,color .3s;
 }
 
@@ -46,10 +49,21 @@ body{
 .screen{display:none;flex:1;overflow-y:auto;overflow-x:hidden;flex-direction:column;}
 .screen.active{display:flex;}
 
+/* 퀴즈 화면: body padding 무시하고 뷰포트 전체 점유 */
+#screen-quiz{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  z-index:50;
+  background:var(--bg);
+  display:none;
+  flex-direction:column;
+}
+#screen-quiz.active{display:flex;}
+
 /* ── TOP BAR ─────────────────────────────────── */
 .topbar{
   display:flex;align-items:center;justify-content:space-between;
-  padding:14px 16px 10px;
+  padding:8px 16px 8px;
+  padding-top:max(env(safe-area-inset-top), 8px);
   background:var(--bg);
   border-bottom:1.5px solid var(--border);flex-shrink:0;
   position:sticky;top:0;z-index:10;
@@ -72,11 +86,11 @@ body{
 }
 .nav-btn{
   flex:1;display:flex;flex-direction:column;align-items:center;
-  padding:8px 4px 8px;cursor:pointer;
-  font-size:10px;font-weight:600;color:var(--text2);
+  padding:4px 4px 4px;cursor:pointer;
+  font-size:9px;font-weight:600;color:var(--text2);
   transition:color .15s;border:none;background:none;
 }
-.nav-btn .nav-icon{font-size:22px;margin-bottom:3px;}
+.nav-btn .nav-icon{font-size:16px;margin-bottom:1px;}
 .nav-btn.active{color:var(--green);}
 
 /* ── JOURNEY REDESIGN ────────────────────── */
@@ -225,6 +239,14 @@ body{
 .gift-heart-btn{background:none;border:1.5px solid #FF6B9D;border-radius:20px;padding:4px 10px;font-size:12px;font-weight:700;color:#FF6B9D;cursor:pointer;white-space:nowrap;margin-left:4px;}
 .gift-heart-btn:active{transform:scale(.95);}
 .gift-heart-btn:disabled{opacity:.4;cursor:default;}
+/* 하트 요청 */
+.heart-req-card{margin:12px 16px 4px;padding:14px 16px;background:var(--card);border:1.5px solid #FF6B9D;border-radius:16px;text-align:center;}
+.heart-req-card-title{font-size:13px;font-weight:700;color:var(--text2);margin-bottom:10px;}
+.heart-req-send-btn{padding:10px 20px;border:none;border-radius:20px;background:#FF6B9D;color:#fff;font-size:13px;font-weight:800;cursor:pointer;transition:.15s;}
+.heart-req-send-btn:active{opacity:.8;}
+.heart-req-send-btn:disabled{background:var(--border);color:var(--text2);cursor:default;}
+.heart-req-sent-label{font-size:13px;color:#FF6B9D;font-weight:700;}
+.heart-req-badge{display:inline-block;font-size:11px;background:#FF6B9D22;color:#FF6B9D;border:1px solid #FF6B9D66;border-radius:10px;padding:1px 7px;margin-left:5px;font-weight:700;vertical-align:middle;}
 
 /* Shop Modal */
 .shop-modal-overlay{
@@ -321,6 +343,26 @@ body{
 
 /* ── HOME ────────────────────────────────────── */
 .home-body{padding:16px;display:flex;flex-direction:column;gap:16px;}
+/* ── 홈 상단 이동 플로팅 버튼 ───────────────── */
+#scroll-top-btn{
+  position:fixed;
+  bottom:calc(52px + env(safe-area-inset-bottom) + 12px);
+  right:16px;
+  width:44px;height:44px;
+  border-radius:50%;
+  border:none;
+  background:var(--bg);
+  box-shadow:0 2px 12px rgba(0,0,0,.18);
+  font-size:20px;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;
+  transition:opacity .25s, transform .25s;
+  z-index:40;
+  -webkit-tap-highlight-color:transparent;
+}
+#scroll-top-btn.visible{opacity:1;pointer-events:auto;}
+#scroll-top-btn:active{transform:scale(.88);}
 .daily-card{
   background:linear-gradient(135deg,#58CC02,#46A302);
   border-radius:var(--r);padding:16px 20px;color:#fff;
@@ -365,15 +407,23 @@ body{
 
 /* ── QUIZ ────────────────────────────────────── */
 .quiz-header{
-  padding:14px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;
+  padding:14px 16px;display:flex;align-items:center;gap:12px;
   background:var(--bg);border-bottom:1.5px solid var(--border);
+  padding-top:max(env(safe-area-inset-top), 14px);
+  flex-shrink:0;
 }
 .quiz-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text2);}
 .quiz-progress-wrap{flex:1;background:var(--bg3);border-radius:99px;height:8px;overflow:hidden;}
 .quiz-progress-bar{height:100%;border-radius:99px;background:var(--green);transition:width .4s ease;}
 .quiz-hearts{display:flex;gap:4px;font-size:16px;}
 
-.quiz-body{flex:1;display:flex;flex-direction:column;padding:24px 20px 20px;gap:20px;}
+.quiz-body{
+  flex:1;min-height:0;
+  overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  display:flex;flex-direction:column;
+  padding:24px 20px 20px;gap:20px;
+}
 .quiz-prompt{font-size:13px;font-weight:600;color:var(--text2);}
 .quiz-question{font-size:22px;font-weight:800;line-height:1.4;}
 .quiz-jp{font-size:17px;color:var(--text2);margin-top:4px;}
@@ -416,8 +466,19 @@ body{
 .fb-title.w{color:var(--red);}
 .fb-ans{font-size:14px;font-weight:600;color:var(--text);}
 
+/* 퀴즈 하단 고정 푸터 */
+#quiz-footer{
+  display:none;
+  padding:12px 20px;
+  padding-bottom:max(env(safe-area-inset-bottom), 12px);
+  background:var(--bg);
+  border-top:1.5px solid var(--border);
+  flex-shrink:0;
+}
+#quiz-footer.show{display:block;}
+
 .quiz-continue-btn{
-  margin-top:auto;padding:16px;border-radius:var(--r);
+  width:100%;padding:16px;border-radius:var(--r);
   border:none;font-size:16px;font-weight:800;
   cursor:pointer;transition:all .15s;letter-spacing:.01em;
 }
@@ -470,6 +531,22 @@ body{
 .fill-card-meaning{font-size:13px;color:var(--text2);margin-top:3px;}
 
 /* ── REVIEW CARD (Home) ───────────────────────── */
+/* ── 다음 레슨 바로가기 카드 ───────────────────── */
+.next-lesson-card{
+  border-radius:var(--r);padding:16px;
+  display:flex;align-items:center;gap:14px;
+  cursor:pointer;margin-bottom:12px;
+  transition:transform .15s;-webkit-tap-highlight-color:transparent;
+  border:2px solid transparent;
+}
+.next-lesson-card:active{transform:scale(.98);}
+.nlc-emoji{font-size:34px;flex-shrink:0;}
+.nlc-text{flex:1;min-width:0;}
+.nlc-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;opacity:.65;margin-bottom:2px;}
+.nlc-title{font-size:17px;font-weight:800;line-height:1.3;}
+.nlc-sub{font-size:12px;margin-top:3px;opacity:.7;}
+.nlc-arrow{font-size:22px;flex-shrink:0;opacity:.5;}
+
 .review-card{background:linear-gradient(135deg,#fff3e0,#ffe0b2);border:2px solid #FF9600;border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:12px;transition:all .15s;-webkit-tap-highlight-color:transparent;}
 .review-card:active{transform:scale(.98);}
 .rc-icon{font-size:30px;}
@@ -540,7 +617,7 @@ body{
 .mc-icon{font-size:42px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.2));}
 
 /* ── SETTINGS ────────────────────────────────── */
-.settings-body{padding:16px;display:flex;flex-direction:column;gap:12px;}
+.settings-body{padding:16px;padding-bottom:32px;display:flex;flex-direction:column;gap:12px;}
 .settings-section{background:var(--bg2);border-radius:var(--r);overflow:hidden;}
 .ss-header{padding:14px 16px 6px;font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;}
 .setting-row{
@@ -716,6 +793,11 @@ body{
   background:rgba(255,255,255,.2);border-radius:8px;padding:1px 5px;
 }
 .flight-plane.me .fp-rank{background:#FFD900;color:#333;}
+.flight-plane .fp-name{
+  position:absolute;top:auto;bottom:-33px;left:50%;transform:translateX(-50%);
+  font-size:8px;font-weight:600;white-space:nowrap;color:rgba(255,255,255,.85);
+  text-shadow:0 1px 2px rgba(0,0,0,.5);
+}
 
 /* 상위 3명 카드 */
 .top3-section{padding:14px 16px 0;}
@@ -768,7 +850,7 @@ body{
   font-size:14px;font-weight:800;color:#fff;flex-shrink:0;
 }
 .rank-info{flex:1;min-width:0;}
-.rank-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rank-name{font-size:13px;font-weight:700;word-break:keep-all;}
 .rank-sub{font-size:11px;color:var(--text2);margin-top:1px;}
 .rank-xp{font-size:14px;font-weight:800;color:var(--green);flex-shrink:0;}
 .rank-xp.zero{color:var(--text2);}
@@ -1114,6 +1196,61 @@ body{
 [data-theme="dark"] .reading-text{color:#7dd8fd;}
 .quiz-jp{font-size:16px;color:var(--text2);margin-top:4px;font-weight:600;}
 
+/* ── FURIGANA (pronunciation above JP text) ──── */
+.quiz-jp-wrap{display:flex;flex-direction:column;align-items:flex-start;gap:1px;}
+/* ── WORD TAP ──────────────────────────────────── */
+.jp-word-row{display:flex;flex-wrap:wrap;gap:2px;align-items:flex-end;}
+.jp-word{display:inline-flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;
+  padding:2px 3px;border-radius:6px;transition:background .12s;}
+.jp-word:active{background:var(--blue-lt);}
+.jp-word.tapped{background:var(--blue-lt);}
+.jp-word-furi{font-size:9px;color:var(--blue);font-weight:600;line-height:1;white-space:nowrap;min-height:10px;}
+[data-theme="dark"] .jp-word-furi{color:#7dd8fd;}
+.jp-word-text{font-size:20px;font-weight:800;color:var(--text);line-height:1.2;
+  border-bottom:1.5px dashed var(--border);}
+.jp-word:active .jp-word-text,.jp-word.tapped .jp-word-text{border-color:var(--blue);}
+
+/* Rev card word tap */
+.rev-jp-word-row{display:flex;flex-wrap:wrap;gap:3px;align-items:flex-end;justify-content:center;margin-bottom:4px;}
+.rev-jp-word{display:inline-flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;
+  padding:4px 4px 2px;border-radius:8px;transition:background .12s;}
+.rev-jp-word:active,.rev-jp-word.tapped{background:rgba(28,176,246,.12);}
+.rev-jp-word-furi{font-size:10px;color:var(--blue);font-weight:600;line-height:1;min-height:11px;white-space:nowrap;}
+[data-theme="dark"] .rev-jp-word-furi{color:#7dd8fd;}
+.rev-jp-word-text{font-size:28px;font-weight:800;color:var(--text);line-height:1.2;
+  border-bottom:1.5px dashed rgba(28,176,246,.4);}
+.rev-jp-word:active .rev-jp-word-text,.rev-jp-word.tapped .rev-jp-word-text{border-color:var(--blue);}
+
+/* Word meaning popup */
+#word-popup{
+  position:fixed;z-index:300;
+  background:var(--bg);border:2px solid var(--blue);border-radius:14px;
+  padding:10px 14px;box-shadow:0 4px 20px rgba(0,0,0,.2);
+  min-width:120px;max-width:220px;pointer-events:none;
+  opacity:0;transform:translateY(6px) scale(.95);
+  transition:opacity .15s,transform .15s;
+}
+#word-popup.show{opacity:1;transform:translateY(0) scale(1);}
+.wp-surface{font-size:18px;font-weight:800;color:var(--text);margin-bottom:2px;}
+.wp-reading{font-size:12px;color:var(--blue);font-weight:600;margin-bottom:4px;}
+[data-theme="dark"] .wp-reading{color:#7dd8fd;}
+.wp-meaning{font-size:13px;font-weight:700;color:var(--text2);}
+.wp-no-meaning{font-size:12px;color:var(--text2);font-style:italic;}
+.quiz-jp-furigana{font-size:10px;color:var(--blue);font-weight:600;letter-spacing:.03em;line-height:1.2;white-space:pre-wrap;}
+[data-theme="dark"] .quiz-jp-furigana{color:#7dd8fd;}
+.rev-jp-furigana{font-size:12px;color:var(--blue);font-weight:600;letter-spacing:.03em;margin-bottom:4px;}
+[data-theme="dark"] .rev-jp-furigana{color:#7dd8fd;}
+
+/* ── PRON MODE PICKER (settings) ──────────────── */
+.pron-mode-row{display:flex;gap:8px;margin-top:10px;}
+.pron-mode-btn{flex:1;padding:10px 6px;border:2px solid var(--border);border-radius:12px;
+  background:transparent;font-size:13px;font-weight:700;cursor:pointer;color:var(--text2);
+  transition:.15s;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.pron-mode-btn.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+.pron-mode-btn.active .pmd-sub{color:rgba(255,255,255,.8);}
+.pmd-jp{font-size:18px;font-weight:800;}
+.pmd-sub{font-size:10px;color:var(--text2);}
+
 /* ── GOSPEL TRACT PHONETIC ───────────────────── */
 .jp-reading{
   font-size:11px;color:#1CB0F6;
@@ -1392,6 +1529,41 @@ body{
 }
 .full-btn:active{background:var(--green-dk);}
 .full-btn.outline{background:transparent;border:2px solid var(--border);color:var(--text);}
+/* ── 문자 마스터 ── */
+.auth-guest-btn{display:block;width:100%;margin-top:12px;padding:13px;border:2px solid var(--border);border-radius:var(--r);background:transparent;font-size:14px;font-weight:700;cursor:pointer;color:var(--text2);transition:.15s;}
+.auth-guest-btn:active{background:var(--border);}
+.kana-header{display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1.5px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:10;}
+.kana-back-btn{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text);padding:4px 8px 4px 0;line-height:1;}
+.kana-title{font-size:18px;font-weight:800;color:var(--text);}
+.kana-cat-tabs{display:flex;gap:8px;padding:14px 16px 0;}
+.kana-cat-btn{flex:1;padding:10px 4px;border:2px solid var(--border);border-radius:12px;background:transparent;font-size:13px;font-weight:700;cursor:pointer;color:var(--text2);transition:.15s;}
+.kana-cat-btn.active{background:var(--green);border-color:var(--green);color:#fff;}
+.kana-mode-tabs{display:flex;gap:8px;padding:10px 16px 4px;}
+.kana-mode-btn{flex:1;padding:9px 4px;border:2px solid var(--border);border-radius:12px;background:transparent;font-size:13px;font-weight:700;cursor:pointer;color:var(--text2);transition:.15s;}
+.kana-mode-btn.active{background:#1CB0F6;border-color:#1CB0F6;color:#fff;}
+.kana-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:14px 16px;}
+.kana-grid.bible-grid{grid-template-columns:repeat(2,1fr);}
+.kana-card{background:var(--card);border-radius:12px;padding:12px 4px 10px;text-align:center;border:1.5px solid var(--border);}
+.kana-char{font-size:26px;font-weight:700;color:var(--text);line-height:1.2;}
+.kana-grid.bible-grid .kana-char{font-size:18px;letter-spacing:-0.5px;}
+.kana-rom{font-size:11px;color:var(--green);font-weight:700;margin-top:4px;}
+.kana-kor{font-size:11px;color:var(--text2);margin-top:2px;}
+.kana-quiz-wrap{text-align:center;padding:16px 16px 24px;}
+.kana-quiz-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;font-size:13px;}
+.kana-quiz-progress{color:var(--text2);}
+.kana-quiz-score{color:var(--green);font-weight:700;}
+.kana-quiz-char{font-size:80px;font-weight:700;color:var(--text);line-height:1;margin:8px 0 12px;}
+.kana-quiz-sub{font-size:14px;color:var(--text2);margin-bottom:24px;}
+.kana-quiz-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.kana-opt-btn{padding:16px 8px;border:2px solid var(--border);border-radius:14px;background:var(--card);font-size:15px;font-weight:700;cursor:pointer;color:var(--text);transition:.15s;line-height:1.4;}
+.kana-opt-btn:active{opacity:.8;}
+.kana-result{text-align:center;padding:40px 16px 24px;}
+.kana-result-emoji{font-size:64px;margin-bottom:12px;}
+.kana-result-score{font-size:40px;font-weight:800;color:var(--text);margin-bottom:4px;}
+.kana-result-pct{font-size:18px;color:var(--green);font-weight:700;margin-bottom:8px;}
+.kana-result-msg{font-size:15px;color:var(--text2);margin-bottom:28px;}
+.kana-retry-btn{display:block;width:100%;padding:14px;border-radius:var(--r);border:none;font-size:15px;font-weight:800;cursor:pointer;background:var(--green);color:#fff;margin-bottom:10px;}
+.kana-retry-btn.outline{background:transparent;border:2px solid var(--border);color:var(--text);}
 </style>
 </head>
 <body>
@@ -1421,7 +1593,7 @@ body{
           <div class="shop-item-badge" id="hearts-status">현재 하트: 5개</div>
         </div>
         <button class="shop-buy-btn" id="buy-hearts-btn" onclick="buyHearts()">
-          <span class="btn-gem">💎</span> 100
+          <span class="btn-gem">💎</span> 35
         </button>
       </div>
       <div class="shop-item">
@@ -1488,10 +1660,17 @@ body{
         <button class="auth-btn" onclick="doLogin()">로그인</button>
       </div>
     </div>
+    <button class="auth-guest-btn" onclick="openKanaMaster()">📖 문자 마스터 — 로그인 없이 시작</button>
   </div>
 </div>
 
 <!-- ══════════════════ HOME SCREEN ══════════════════ -->
+<button id="scroll-top-btn" onclick="document.getElementById('screen-home').scrollTo({top:0,behavior:'smooth'})">↑</button>
+<div id="word-popup">
+  <div class="wp-surface" id="wp-surface"></div>
+  <div class="wp-reading" id="wp-reading"></div>
+  <div class="wp-meaning" id="wp-meaning"></div>
+</div>
 <div class="screen" id="screen-home">
   <div class="topbar">
     <div class="topbar-logo">메구미링고</div>
@@ -1541,6 +1720,7 @@ body{
       <div class="mc-icon">🇯🇵</div>
     </div>
 
+    <div id="next-lesson-card"></div>
     <div id="review-card-slot"></div>
     <div class="journey-section-label">🗺️ 선교 여정</div>
     <div class="journey-wrap" id="journey-wrap"></div>
@@ -1555,6 +1735,9 @@ body{
     <div class="quiz-hearts" id="quiz-hearts-display"></div>
   </div>
   <div class="quiz-body" id="quiz-body"></div>
+  <div id="quiz-footer">
+    <button id="continue-btn" class="quiz-continue-btn green" onclick="nextQuestion()">계속하기</button>
+  </div>
 </div>
 
 <!-- ══════════════════ RESULT SCREEN ══════════════════ -->
@@ -1854,6 +2037,32 @@ body{
       </div>
     </div>
 
+    <!-- Pronunciation Section -->
+    <div class="settings-section">
+      <div class="ss-header">🈳 발음 표시</div>
+      <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div class="sr-left">
+            <div class="sr-label">한자 위 발음 표시</div>
+            <div class="sr-sub">퀴즈에서 한자 위에 읽는 법을 보여줘요</div>
+          </div>
+          <button class="toggle" id="pron-toggle" onclick="toggleShowPron()"></button>
+        </div>
+        <div id="pron-mode-wrap" style="display:none;">
+          <div class="pron-mode-row">
+            <button class="pron-mode-btn active" id="pron-roman-btn" onclick="setPronMode('roman')">
+              <span class="pmd-jp" style="font-size:13px;letter-spacing:.05em;">ni hon go</span>
+              <span class="pmd-sub">로마자 (Romanized)</span>
+            </button>
+            <button class="pron-mode-btn" id="pron-hira-btn" onclick="setPronMode('hira')">
+              <span class="pmd-jp">にほんご</span>
+              <span class="pmd-sub">히라가나 (Japanese)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Hearts refill info -->
     <div class="settings-section">
       <div class="ss-header">❤️ 하트 정보</div>
@@ -1882,6 +2091,18 @@ body{
           <div class="sr-sub">XP·스트릭·진행도 전체 삭제 (복구 불가)</div>
         </div>
         <button onclick="resetMyData()" style="flex-shrink:0;padding:8px 14px;border-radius:10px;border:none;background:#FF4B4B;color:#fff;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;">🗑️ 초기화</button>
+      </div>
+    </div>
+
+    <!-- App Update -->
+    <div class="settings-section">
+      <div class="ss-header">🔄 앱 업데이트</div>
+      <div class="setting-row" style="align-items:center;justify-content:space-between;">
+        <div class="sr-left">
+          <div class="sr-label">최신 버전으로 업데이트</div>
+          <div class="sr-sub">홈 화면 추가 앱에 최신 내용이 반영되지 않을 때</div>
+        </div>
+        <button onclick="forceAppUpdate()" id="update-btn" style="flex-shrink:0;padding:8px 14px;border-radius:10px;border:none;background:var(--blue);color:#fff;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;">🔄 업데이트</button>
       </div>
     </div>
 
@@ -1985,6 +2206,9 @@ body{
       </div>
       <div id="rank-list"></div>
     </div>
+
+    <!-- 하트 요청 -->
+    <div id="heart-req-section"></div>
   </div>
 </div>
 
@@ -2037,6 +2261,24 @@ body{
 </div>
 
 <!-- BOTTOM NAV -->
+<!-- ══════════════════ KANA MASTER SCREEN ══════════════════ -->
+<div class="screen" id="screen-kana" style="overflow-y:auto;">
+  <div class="kana-header">
+    <button class="kana-back-btn" onclick="closeKanaMaster()">←</button>
+    <span class="kana-title">📖 문자 마스터</span>
+  </div>
+  <div class="kana-cat-tabs">
+    <button class="kana-cat-btn active" id="kana-cat-hiragana" onclick="setKanaCategory('hiragana')">히라가나</button>
+    <button class="kana-cat-btn" id="kana-cat-katakana" onclick="setKanaCategory('katakana')">가타카나</button>
+    <button class="kana-cat-btn" id="kana-cat-bible" onclick="setKanaCategory('bible')">성경 인물</button>
+  </div>
+  <div class="kana-mode-tabs">
+    <button class="kana-mode-btn active" id="kana-mode-table" onclick="setKanaMode('table')">📋 표로 보기</button>
+    <button class="kana-mode-btn" id="kana-mode-quiz" onclick="setKanaMode('quiz')">🎯 퀴즈</button>
+  </div>
+  <div id="kana-content"></div>
+</div>
+
 <div class="bottom-nav" style="display:none;">
   <button class="nav-btn active" id="nav-home" onclick="goTo('home')">
     <span class="nav-icon">🏠</span>홈
@@ -2083,6 +2325,8 @@ const S = {
   streakShield: false,
   couponRevealed: false,
   notifTimeout:null,
+  heartsSentToday: { date: '', sentTo: [] }, // 하트 선물 하루 5회 / 동일인 중복 방지
+  heartRequestedToday: '',  // 하트 요청 발송한 날짜 (당일 1회 제한)
 };
 
 /* ═══════════════════════════════════════════
@@ -2108,10 +2352,161 @@ function goTo(name) {
   const nav = document.querySelector('.bottom-nav');
   if(nav) nav.style.display = name === 'auth' ? 'none' : 'flex';
   syncNavPadding();
+  if(nav) nav.style.display = (name === 'auth' || name === 'kana') ? 'none' : 'flex';
   if(name==='home') { renderHome(); updateTopbarUser(); }
   if(name==='stats') renderStats();
   if(name==='settings') renderSettings();
   if(name==='team') renderTeam();
+}
+
+/* ═══════════════════════════════════════════
+   문자 마스터
+═══════════════════════════════════════════ */
+const KANA_DATA = {
+  hiragana: [
+    {c:'あ',r:'a',k:'아'},{c:'い',r:'i',k:'이'},{c:'う',r:'u',k:'우'},{c:'え',r:'e',k:'에'},{c:'お',r:'o',k:'오'},
+    {c:'か',r:'ka',k:'카'},{c:'き',r:'ki',k:'키'},{c:'く',r:'ku',k:'쿠'},{c:'け',r:'ke',k:'케'},{c:'こ',r:'ko',k:'코'},
+    {c:'さ',r:'sa',k:'사'},{c:'し',r:'shi',k:'시'},{c:'す',r:'su',k:'스'},{c:'せ',r:'se',k:'세'},{c:'そ',r:'so',k:'소'},
+    {c:'た',r:'ta',k:'타'},{c:'ち',r:'chi',k:'치'},{c:'つ',r:'tsu',k:'츠'},{c:'て',r:'te',k:'테'},{c:'と',r:'to',k:'토'},
+    {c:'な',r:'na',k:'나'},{c:'に',r:'ni',k:'니'},{c:'ぬ',r:'nu',k:'누'},{c:'ね',r:'ne',k:'네'},{c:'の',r:'no',k:'노'},
+    {c:'は',r:'ha',k:'하'},{c:'ひ',r:'hi',k:'히'},{c:'ふ',r:'fu',k:'후'},{c:'へ',r:'he',k:'헤'},{c:'ほ',r:'ho',k:'호'},
+    {c:'ま',r:'ma',k:'마'},{c:'み',r:'mi',k:'미'},{c:'む',r:'mu',k:'무'},{c:'め',r:'me',k:'메'},{c:'も',r:'mo',k:'모'},
+    {c:'や',r:'ya',k:'야'},{c:'ゆ',r:'yu',k:'유'},{c:'よ',r:'yo',k:'요'},
+    {c:'ら',r:'ra',k:'라'},{c:'り',r:'ri',k:'리'},{c:'る',r:'ru',k:'루'},{c:'れ',r:'re',k:'레'},{c:'ろ',r:'ro',k:'로'},
+    {c:'わ',r:'wa',k:'와'},{c:'を',r:'wo',k:'오'},{c:'ん',r:'n',k:'ん'},
+  ],
+  katakana: [
+    {c:'ア',r:'a',k:'아'},{c:'イ',r:'i',k:'이'},{c:'ウ',r:'u',k:'우'},{c:'エ',r:'e',k:'에'},{c:'オ',r:'o',k:'오'},
+    {c:'カ',r:'ka',k:'카'},{c:'キ',r:'ki',k:'키'},{c:'ク',r:'ku',k:'쿠'},{c:'ケ',r:'ke',k:'케'},{c:'コ',r:'ko',k:'코'},
+    {c:'サ',r:'sa',k:'사'},{c:'シ',r:'shi',k:'시'},{c:'ス',r:'su',k:'스'},{c:'セ',r:'se',k:'세'},{c:'ソ',r:'so',k:'소'},
+    {c:'タ',r:'ta',k:'타'},{c:'チ',r:'chi',k:'치'},{c:'ツ',r:'tsu',k:'츠'},{c:'テ',r:'te',k:'테'},{c:'ト',r:'to',k:'토'},
+    {c:'ナ',r:'na',k:'나'},{c:'ニ',r:'ni',k:'니'},{c:'ヌ',r:'nu',k:'누'},{c:'ネ',r:'ne',k:'네'},{c:'ノ',r:'no',k:'노'},
+    {c:'ハ',r:'ha',k:'하'},{c:'ヒ',r:'hi',k:'히'},{c:'フ',r:'fu',k:'후'},{c:'ヘ',r:'he',k:'헤'},{c:'ホ',r:'ho',k:'호'},
+    {c:'マ',r:'ma',k:'마'},{c:'ミ',r:'mi',k:'미'},{c:'ム',r:'mu',k:'무'},{c:'メ',r:'me',k:'메'},{c:'モ',r:'mo',k:'모'},
+    {c:'ヤ',r:'ya',k:'야'},{c:'ユ',r:'yu',k:'유'},{c:'ヨ',r:'yo',k:'요'},
+    {c:'ラ',r:'ra',k:'라'},{c:'リ',r:'ri',k:'리'},{c:'ル',r:'ru',k:'루'},{c:'レ',r:'re',k:'레'},{c:'ロ',r:'ro',k:'로'},
+    {c:'ワ',r:'wa',k:'와'},{c:'ヲ',r:'wo',k:'오'},{c:'ン',r:'n',k:'ん'},
+  ],
+  bible: [
+    {c:'アダム',r:'Adamu',k:'아담'},{c:'エバ',r:'Eba',k:'하와'},{c:'ノア',r:'Noa',k:'노아'},
+    {c:'アブラハム',r:'Aburahamu',k:'아브라함'},{c:'サラ',r:'Sara',k:'사라'},{c:'イサク',r:'Isaku',k:'이삭'},
+    {c:'ヤコブ',r:'Yakobu',k:'야곱'},{c:'ヨセフ',r:'Yosefu',k:'요셉'},{c:'モーセ',r:'Mōse',k:'모세'},
+    {c:'ダビデ',r:'Dabide',k:'다윗'},{c:'ソロモン',r:'Soromon',k:'솔로몬'},{c:'エリヤ',r:'Eriya',k:'엘리야'},
+    {c:'ダニエル',r:'Danieru',k:'다니엘'},{c:'イエス',r:'Iesu',k:'예수'},{c:'マリア',r:'Maria',k:'마리아'},
+    {c:'ペテロ',r:'Petero',k:'베드로'},{c:'パウロ',r:'Pauro',k:'바울'},{c:'ヨハネ',r:'Yohane',k:'요한'},
+    {c:'マタイ',r:'Matai',k:'마태'},{c:'ルカ',r:'Ruka',k:'누가'},
+  ]
+};
+
+let _kanaCategory = 'hiragana';
+let _kanaMode = 'table';
+let _kanaPrevScreen = 'auth';
+let _kanaQuiz = null;
+
+function openKanaMaster() {
+  _kanaPrevScreen = CU && CU.uid ? 'home' : 'auth';
+  _kanaCategory = 'hiragana';
+  _kanaMode = 'table';
+  goTo('kana');
+  renderKanaTable();
+}
+
+function closeKanaMaster() { goTo(_kanaPrevScreen); }
+
+function setKanaCategory(cat) {
+  _kanaCategory = cat;
+  _kanaMode = 'table';
+  document.getElementById('kana-mode-table').classList.add('active');
+  document.getElementById('kana-mode-quiz').classList.remove('active');
+  ['hiragana','katakana','bible'].forEach(c => {
+    document.getElementById('kana-cat-'+c).classList.toggle('active', c === cat);
+  });
+  renderKanaTable();
+}
+
+function setKanaMode(mode) {
+  _kanaMode = mode;
+  document.getElementById('kana-mode-table').classList.toggle('active', mode === 'table');
+  document.getElementById('kana-mode-quiz').classList.toggle('active', mode === 'quiz');
+  if(mode === 'quiz') startKanaQuiz();
+  else renderKanaTable();
+}
+
+function renderKanaTable() {
+  const data = KANA_DATA[_kanaCategory];
+  const isBible = _kanaCategory === 'bible';
+  let html = `<div class="kana-grid${isBible ? ' bible-grid' : ''}">`;
+  data.forEach(item => {
+    html += `<div class="kana-card">
+      <div class="kana-char">${item.c}</div>
+      ${isBible ? `<div class="kana-rom" style="font-size:13px;color:var(--text);font-weight:800;margin-top:5px;">${item.k}</div><div class="kana-kor">${item.r}</div>` : `<div class="kana-rom">${item.r}</div><div class="kana-kor">${item.k}</div>`}
+    </div>`;
+  });
+  html += '</div>';
+  document.getElementById('kana-content').innerHTML = html;
+}
+
+function startKanaQuiz() {
+  const data = KANA_DATA[_kanaCategory];
+  const shuffled = [...data].sort(() => Math.random() - 0.5);
+  _kanaQuiz = { questions: shuffled.slice(0, Math.min(10, shuffled.length)), idx: 0, score: 0 };
+  renderKanaQuestion();
+}
+
+function renderKanaQuestion() {
+  const { questions, idx, score } = _kanaQuiz;
+  if(idx >= questions.length) { renderKanaResult(); return; }
+  const q = questions[idx];
+  const data = KANA_DATA[_kanaCategory];
+  const isBible = _kanaCategory === 'bible';
+  const wrong = data.filter(d => d.r !== q.r).sort(() => Math.random() - 0.5).slice(0, 3);
+  const options = [...wrong, q].sort(() => Math.random() - 0.5);
+  document.getElementById('kana-content').innerHTML = `
+    <div class="kana-quiz-wrap">
+      <div class="kana-quiz-top">
+        <span class="kana-quiz-progress">${idx + 1} / ${questions.length}</span>
+        <span class="kana-quiz-score">✅ ${score}</span>
+      </div>
+      <div class="kana-quiz-char">${q.c}</div>
+      <div class="kana-quiz-sub">${isBible ? '이 인물의 한국 이름은?' : '이 문자의 읽기는?'}</div>
+      <div class="kana-quiz-options">
+        ${options.map(o => `<button class="kana-opt-btn" onclick="answerKana('${o.r}','${q.r}')">${isBible ? o.k : o.r}</button>`).join('')}
+      </div>
+    </div>`;
+}
+
+function answerKana(selected, correct) {
+  const isCorrect = selected === correct;
+  if(isCorrect) _kanaQuiz.score++;
+  _kanaQuiz.idx++;
+  document.querySelectorAll('.kana-opt-btn').forEach(b => {
+    b.disabled = true;
+    const isBible = _kanaCategory === 'bible';
+    const val = b.textContent.trim();
+    const correctData = KANA_DATA[_kanaCategory].find(d => d.r === correct);
+    const correctLabel = isBible ? correctData?.k : correct;
+    const selectedData = KANA_DATA[_kanaCategory].find(d => d.r === selected);
+    const selectedLabel = isBible ? selectedData?.k : selected;
+    if(val === correctLabel) b.style.background = '#58CC02', b.style.color = '#fff', b.style.borderColor = '#58CC02';
+    else if(val === selectedLabel && !isCorrect) b.style.background = '#FF4B4B', b.style.color = '#fff', b.style.borderColor = '#FF4B4B';
+  });
+  setTimeout(renderKanaQuestion, 700);
+}
+
+function renderKanaResult() {
+  const { questions, score } = _kanaQuiz;
+  const pct = Math.round(score / questions.length * 100);
+  const emoji = pct >= 90 ? '🏆' : pct >= 70 ? '⭐' : pct >= 50 ? '👍' : '💪';
+  const msg = pct >= 90 ? '완벽해요! 선교사 준비 완료! 🎉' : pct >= 70 ? '잘했어요! 조금만 더!' : pct >= 50 ? '절반 이상! 다시 도전해봐요!' : '연습이 실력을 만들어요!';
+  document.getElementById('kana-content').innerHTML = `
+    <div class="kana-result">
+      <div class="kana-result-emoji">${emoji}</div>
+      <div class="kana-result-score">${score} / ${questions.length}</div>
+      <div class="kana-result-pct">${pct}% 정답</div>
+      <div class="kana-result-msg">${msg}</div>
+      <button class="kana-retry-btn" onclick="startKanaQuiz()">🔄 다시 퀴즈</button>
+      <button class="kana-retry-btn outline" onclick="setKanaMode('table')">📋 표로 보기</button>
+    </div>`;
 }
 
 /* ═══════════════════════════════════════════
@@ -2192,6 +2587,7 @@ function renderHome() {
   updateHomeMascot();
   renderJourney();
   renderReviewCard();
+  renderNextLessonCard();
 }
 
 /* ═══════════════════════════════════════════
@@ -2239,7 +2635,7 @@ function getUnitForLesson(lessonId) {
 
 /* ─── HEART MODAL ─── */
 function showHeartModal() {
-  const cost = 50;
+  const cost = 35;
   const canAfford = S.gems >= cost;
   document.getElementById('hm-sub').textContent = canAfford
     ? `보석 ${cost}개로 하트 ${S.maxHearts}개를 충전할 수 있어요 (현재 💎${S.gems})`
@@ -2251,7 +2647,7 @@ function closeHeartModal() {
   document.getElementById('heart-modal-overlay').classList.remove('active');
 }
 function refillHeartsWithGems() {
-  const cost = 50;
+  const cost = 35;
   if (S.gems < cost) return;
   S.gems -= cost;
   S.hearts = S.maxHearts;
@@ -2268,19 +2664,32 @@ function goGetHeartGift() {
 }
 
 /* ─── HEART GIFT (Firebase) ─── */
+function getTodayHeartsSent() {
+  const today = new Date().toDateString();
+  if (S.heartsSentToday.date !== today) {
+    S.heartsSentToday = { date: today, sentTo: [] };
+  }
+  return S.heartsSentToday.sentTo;
+}
+
 function giftHeart(targetUid, targetName) {
-  if (S.hearts <= 1) {
-    showToast('❤️ 하트 부족', '하트가 1개 남았을 때는 선물할 수 없어요!', 'warning');
+  if (!_db) { showToast('❌ 오프라인', '선물은 온라인 상태에서만 가능해요', 'warning'); return; }
+  const sentTo = getTodayHeartsSent();
+  if (sentTo.length >= 5) {
+    showToast('❤️ 오늘 선물 완료', '하루에 최대 5명에게 선물할 수 있어요. 내일 다시 시도해요!', 'warning');
     return;
   }
-  if (!_db) { showToast('❌ 오프라인', '선물은 온라인 상태에서만 가능해요', 'warning'); return; }
-  S.hearts -= 1;
-  updateTopbar();
+  if (sentTo.includes(targetUid)) {
+    showToast('❤️ 이미 선물했어요', `${targetName}님께는 오늘 이미 하트를 보냈어요!`, 'warning');
+    return;
+  }
+  S.heartsSentToday.sentTo.push(targetUid);
   persistProgress();
   pushMyProgress();
   _db.ref(`gifts/${targetUid}`).push({ from: CU.uid, fromName: CU.name, hearts: 1, ts: Date.now() });
   renderTeam();
-  showToast('❤️ 하트 선물!', `${targetName}님께 하트 1개를 선물했어요!`, 'success');
+  const remaining = 5 - S.heartsSentToday.sentTo.length;
+  showToast('❤️ 하트 선물!', `${targetName}님께 하트 1개를 선물했어요! (오늘 남은 선물 ${remaining}번)`, 'success');
 }
 function subscribeHeartGifts() {
   if (!_db || !CU.uid) return;
@@ -2391,6 +2800,7 @@ function openChest(chestId) {
   // Show title award modal (with gem reward info)
   showTitleAward(unit.chestTitle, gemReward);
   renderJourney();
+  renderNextLessonCard();
 
   // Special: if final chest, show coupon too
   if(chestId === 'chestFinal') {
@@ -2583,13 +2993,129 @@ function speakJapanese(text, btnEl) {
    QUIZ TYPE HELPERS
 ═══════════════════════════════════════════ */
 
-// 일본어 텍스트를 타일로 분리 (배열 퀴즈용)
+// 일본어 텍스트를 문법 단위(주어/목적어/서술어 등)로 분리 (배열 퀴즈용)
 function tokenizeJp(jp) {
+  // 공백이 있으면 공백 기준 분리
   const bySpace = jp.split(/\s+/).filter(Boolean);
   if (bySpace.length >= 2) return bySpace;
   if (jp.length <= 3) return [jp];
-  const mid = Math.ceil(jp.length / 2);
-  return [jp.slice(0, mid), jp.slice(mid)];
+
+  // ── 관용구 고정 분할 (조사 오탐 방지) ──
+  const FIXED = {
+    'ありがとうございます':  ['ありがとう','ございます'],
+    'どうもありがとうございます': ['どうもありがとう','ございます'],
+    'おはようございます':   ['おはよう','ございます'],
+    'よろしくお願いします': ['よろしく','お願いします'],
+    'よろしくお願いいたします': ['よろしく','お願いいたします'],
+    'どういたしまして':     ['どういたし','まして'],
+    'はじめまして':         ['はじめ','まして'],
+    'おやすみなさい':       ['おやすみ','なさい'],
+    'いただきます':         ['いただき','ます'],
+    'ごちそうさまでした':   ['ごちそうさま','でした'],
+    'おかげさまで元気です': ['おかげさまで','元気です'],
+    'もう一度言っていただけますか': ['もう一度','言っていただけますか'],
+    'ゆっくり話してください': ['ゆっくり','話してください'],
+    'ちょっと待ってください': ['ちょっと','待ってください'],
+    'ちょっとよろしいですか': ['ちょっと','よろしいですか'],
+    '申し訳ありません':     ['申し訳','ありません'],
+  };
+  if (FIXED[jp]) return FIXED[jp];
+
+  // ── 문말 표현 목록 (긴 것부터 먼저) ──
+  const ENDINGS = [
+    'ませんでした','ではありません','ではないです','ていませんでした',
+    'いませんでした','いませんか','いました','いますか','いません','います',
+    'ていません','ていますか','ています','ていました','てください','てみます','てしまいます',
+    'てもいいですか','ましょうか','ましょう','でしょうか','でしょう',
+    'なさい','ください','お願いします','お願いいたします',
+    'ませんか','でしたか','ましたか',
+    'でした','ません','ました','ますか','ますね','ますよ','ます',
+    'ですか','ですね','ですよ','です',
+  ];
+
+  // ── 조사 패턴 (긴 복합조사부터) ──
+  const PARTICLE_RE = /(について|によって|において|に対して|として|ながら|には|では|とは|ては|でも|ても|から|まで|より|は|が|を|に|へ|も|や)/g;
+
+  // 조사 끝 판별용 (문말과 결합 금지)
+  const PARTICLE_END_RE = /(については|によって|において|に対して|として|ながら|には|では|とは|ては|でも|ても|から|まで|より|は|が|を|に|へ|も|や)$/;
+
+  // 1. 문말 표현 검출 (뒤에서부터)
+  let prefix = jp;
+  let endingFound = '';
+  for (const e of ENDINGS) {
+    if (jp.endsWith(e) && jp.length > e.length) {
+      prefix = jp.slice(0, jp.length - e.length);
+      endingFound = e;
+      break;
+    }
+  }
+
+  // 2. prefix를 조사 경계로 분할 (조사 앞에 1자 이상 필요)
+  const tokens = [];
+  let lastIdx = 0;
+  let m;
+  PARTICLE_RE.lastIndex = 0;
+  while ((m = PARTICLE_RE.exec(prefix)) !== null) {
+    const splitAt = m.index + m[0].length;
+    if (m.index >= 1) {  // 조사 앞에 최소 1글자
+      tokens.push(prefix.slice(lastIdx, splitAt));
+      lastIdx = splitAt;
+    }
+  }
+  if (lastIdx < prefix.length) tokens.push(prefix.slice(lastIdx));
+
+  // 3. 문말 표현 처리
+  if (endingFound) {
+    if (tokens.length === 0) {
+      tokens.push(endingFound);
+    } else {
+      const last = tokens[tokens.length - 1];
+      const lastCh = last[last.length - 1];
+      const isHira = c => c >= 'ぁ' && c <= 'ん';
+      const endsWithParticle = PARTICLE_END_RE.test(last);
+      // 동사 어간(히라가나로 끝나고 4자 이하, 조사로 끝나지 않음) → 문말과 결합
+      if (!endsWithParticle && isHira(lastCh) && last.length <= 4) {
+        tokens[tokens.length - 1] += endingFound;
+      } else {
+        tokens.push(endingFound);
+      }
+    }
+  }
+
+  // 4. 후처리: 1글자 단독 토큰은 다음 토큰과 합체 (来+ました → 来ました)
+  const merged = [];
+  let i = 0;
+  while (i < tokens.length) {
+    if (tokens[i].length === 1 && i + 1 < tokens.length) {
+      merged.push(tokens[i] + tokens[i + 1]);
+      i += 2;
+    } else {
+      merged.push(tokens[i]);
+      i++;
+    }
+  }
+  const result = merged.length >= 2 ? merged : tokens;
+
+  // 5. 여전히 1개 이하면 히라가나↔한자 경계 기준 분할 → 최후 중간 분할
+  if (result.length < 2) {
+    const boundaries = [];
+    for (let bi = 1; bi < jp.length; bi++) {
+      const p = jp[bi-1], c = jp[bi];
+      const pHira = (p >= 'ぁ' && p <= 'ん') || (p >= 'ァ' && p <= 'ン');
+      const cKanji = c >= '\u4e00' && c <= '\u9fff';
+      const pKanji = p >= '\u4e00' && p <= '\u9fff';
+      const cHira = (c >= 'ぁ' && c <= 'ん') || (c >= 'ァ' && c <= 'ン');
+      if ((pHira && cKanji) || (pKanji && cHira)) boundaries.push(bi);
+    }
+    if (boundaries.length > 0) {
+      const mid2 = boundaries[Math.floor(boundaries.length / 2)];
+      return [jp.slice(0, mid2), jp.slice(mid2)];
+    }
+    const mid = Math.ceil(jp.length / 2);
+    return [jp.slice(0, mid), jp.slice(mid)];
+  }
+
+  return result;
 }
 
 // 문제 텍스트에서 한국어 의미 추출 (역방향 퀴즈용)
@@ -2658,6 +3184,70 @@ function startReview() {
   S.isReview = true;
   startLesson(reviewLesson);
 }
+/* ── 다음 레슨 바로가기 카드 ────────────────────── */
+function renderNextLessonCard() {
+  const slot = document.getElementById('next-lesson-card');
+  if(!slot) return;
+
+  // 다음 학습 레슨: 잠금 해제됐지만 미완료인 첫 번째 레슨
+  const allIds = JOURNEY_ORDER;
+  let nextLesson = null;
+  for(let i = 0; i < allIds.length; i++) {
+    const lid = allIds[i];
+    const unlocked = i === 0 || S.allCompleted.has(allIds[i - 1]);
+    if(unlocked && !S.allCompleted.has(lid)) {
+      nextLesson = LESSONS.find(l => l.id === lid);
+      break;
+    }
+  }
+
+  if(!nextLesson) {
+    // 모든 레슨 완료
+    slot.innerHTML = `<div class="next-lesson-card" style="background:linear-gradient(135deg,var(--green-lt),#c8f79a);border-color:var(--green);" onclick="startReview()">
+      <div class="nlc-emoji">🏆</div>
+      <div class="nlc-text">
+        <div class="nlc-label" style="color:var(--green-dk);">전체 완료!</div>
+        <div class="nlc-title" style="color:var(--green-dk);">모든 레슨을 완료했어요</div>
+        <div class="nlc-sub">복습으로 실력을 다져봐요 💪</div>
+      </div>
+    </div>`;
+    return;
+  }
+
+  const color = nextLesson.color || 'var(--green)';
+  const todayDone = S.todayXP >= S.dailyGoal;
+  const label = todayDone ? '오늘 목표 달성! 추가 학습' : '지금 바로 시작';
+  // 탭하면 journey map의 현재 레슨 위치로 스크롤
+  const onclick = `scrollToCurrentLesson()`;
+
+  slot.innerHTML = `<div class="next-lesson-card" style="background:linear-gradient(135deg,${color}22,${color}44);border-color:${color};" onclick="${onclick}">
+    <div class="nlc-emoji">${nextLesson.emoji}</div>
+    <div class="nlc-text">
+      <div class="nlc-label" style="color:${color};">${label}</div>
+      <div class="nlc-title">${nextLesson.title}</div>
+      <div class="nlc-sub">${nextLesson.titleJp || ''} · ${nextLesson.questions?.length || 0}개 문제</div>
+    </div>
+  </div>`;
+}
+
+/* ── journey map에서 현재 레슨 위치로 자동 스크롤 ── */
+function scrollToCurrentLesson() {
+  setTimeout(() => {
+    const current = document.querySelector('.journey-node.pulse-ring');
+    if(current) current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 300);
+}
+
+/* ── 홈 스크롤 탑 버튼 초기화 ── */
+function initScrollTopBtn() {
+  const homeScreen = document.getElementById('screen-home');
+  const btn = document.getElementById('scroll-top-btn');
+  if(!homeScreen || !btn) return;
+  homeScreen.addEventListener('scroll', () => {
+    btn.classList.toggle('visible', homeScreen.scrollTop > 200);
+  }, { passive: true });
+}
+
 function renderReviewCard() {
   const slot = document.getElementById('review-card-slot');
   if (!slot) return;
@@ -2702,6 +3292,80 @@ function dedupChoices(q) {
   return { choices, correct };
 }
 
+function getPronText(q) {
+  if (!S.showPron) return '';
+  return S.pronMode === 'hira' ? (q.hira || '') : (q.romaji || '');
+}
+
+/* ── WORD TAP ──────────────────────────────────── */
+let _wpTimer = null;
+
+function showWordPopup(el, surface, reading, meaning) {
+  const popup = document.getElementById('word-popup');
+  document.querySelectorAll('.jp-word.tapped,.rev-jp-word.tapped').forEach(e => e.classList.remove('tapped'));
+  el.classList.add('tapped');
+  document.getElementById('wp-surface').textContent = surface;
+  document.getElementById('wp-reading').textContent = reading !== surface ? reading : '';
+  const mEl = document.getElementById('wp-meaning');
+  if (meaning) {
+    mEl.className = 'wp-meaning';
+    mEl.textContent = meaning;
+  } else {
+    mEl.className = 'wp-no-meaning';
+    mEl.textContent = '의미 정보 없음';
+  }
+
+  // Position popup near the tapped element
+  const rect = el.getBoundingClientRect();
+  const pw = 220, ph = 90;
+  let top = rect.bottom + 8;
+  let left = rect.left + rect.width / 2 - pw / 2;
+  if (left < 8) left = 8;
+  if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+  if (top + ph > window.innerHeight - 20) top = rect.top - ph - 8;
+  popup.style.top = top + 'px';
+  popup.style.left = left + 'px';
+  popup.classList.add('show');
+
+  clearTimeout(_wpTimer);
+  _wpTimer = setTimeout(hideWordPopup, 2500);
+}
+
+function hideWordPopup() {
+  const popup = document.getElementById('word-popup');
+  if (popup) popup.classList.remove('show');
+  document.querySelectorAll('.jp-word.tapped,.rev-jp-word.tapped').forEach(el => el.classList.remove('tapped'));
+}
+
+function buildJpWordSpans(jp, showPron, pronMode, wordCls, furiCls, textCls, rowCls) {
+  const tokens = (typeof WORD_DATA !== 'undefined' && WORD_DATA[jp]) ? WORD_DATA[jp] : null;
+  if (!tokens) {
+    // Fallback: whole text as one clickable span
+    const furi = showPron ? (pronMode === 'hira' ? '' : '') : '';
+    return `<div class="${rowCls}">
+      <div class="${wordCls}" onclick="showWordPopup(this,'${jp.replace(/'/g,"\\'")}','','')">
+        <span class="${furiCls}"></span>
+        <span class="${textCls}">${jp}</span>
+      </div>
+    </div>`;
+  }
+  const spans = tokens.map(t => {
+    const surface = t[0];
+    const reading = t[1] || surface;
+    const meaning = t[2] || '';
+    const furiText = showPron
+      ? (pronMode === 'hira' ? reading : '') : '';
+    const surfSafe = surface.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    const readSafe = reading.replace(/'/g,"\\'");
+    const meanSafe = meaning.replace(/'/g,"\\'");
+    return `<div class="${wordCls}" onclick="showWordPopup(this,'${surfSafe}','${readSafe}','${meanSafe}')">
+      <span class="${furiCls}">${furiText}</span>
+      <span class="${textCls}">${surface}</span>
+    </div>`;
+  }).join('');
+  return `<div class="${rowCls}">${spans}</div>`;
+}
+
 function renderMCQ(q) {
   const total = S.questions.length;
   const keys = ['A','B','C','D'];
@@ -2718,18 +3382,19 @@ function renderMCQ(q) {
     <div class="quiz-prompt"><span class="quiz-type-badge qtb-mcq">🎯 일본어 고르기</span>&nbsp;${S.qIndex+1} / ${total}</div>
     <div class="quiz-question">${q.q}</div>
     ${showJp ? `<div class="quiz-jp-row">
-      <div class="quiz-jp" style="flex:1;">${q.jp}</div>
+      <div class="quiz-jp-wrap" style="flex:1;">
+        ${buildJpWordSpans(q.jp, S.showPron, S.pronMode, 'jp-word', 'jp-word-furi', 'jp-word-text', 'jp-word-row')}
+      </div>
       <button class="speak-btn" id="speak-mcq" onclick="speakJapanese('${jpSafe}',this)" title="발음 듣기">🔊</button>
     </div>` : (q.jp ? `<div class="quiz-jp-row"><button class="speak-btn" id="speak-mcq" onclick="speakJapanese('${jpSafe}',this)" title="발음 듣기">🔊</button></div>` : '')}
-    ${showReading ? `<div class="reading-bubble"><span class="reading-label">발음</span><span class="reading-text">${q.reading}</span></div>` : ''}
+    ${showReading && !S.showPron ? `<div class="reading-bubble"><span class="reading-label">발음</span><span class="reading-text">${q.reading}</span></div>` : ''}
     <div class="quiz-choices" id="choices">
       ${shuffled.map((origIdx,i)=>`
         <button class="choice-btn" data-choice="${q.choices[origIdx].replace(/"/g,'&quot;')}" onclick="selectAnswer(this,'${q.choices[origIdx].replace(/'/g,"\\'")}','${correctChoice.replace(/'/g,"\\'")}')">
           <span class="choice-key">${keys[i]}</span>${q.choices[origIdx]}
         </button>`).join('')}
     </div>
-    <div class="quiz-feedback" id="feedback"></div>
-    <button class="quiz-continue-btn green" id="continue-btn" style="display:none;" onclick="nextQuestion()">계속하기</button>`;
+    <div class="quiz-feedback" id="feedback"></div>`;
   if(document.activeElement) document.activeElement.blur();
 }
 
@@ -2760,11 +3425,11 @@ function renderReverse(q) {
   body.innerHTML = `
     <div class="quiz-prompt"><span class="quiz-type-badge qtb-rev">🔄 뜻 맞추기</span>&nbsp;${S.qIndex+1} / ${total}</div>
     <div class="quiz-question" style="font-size:16px;">이 일본어의 뜻은?</div>
-    <div class="rev-jp-card" onclick="speakJapanese('${jpSafe}',document.getElementById('speak-rev'))">
-      <div class="rev-jp-text">${q.jp}</div>
-      ${q.reading ? `<div class="rev-jp-reading">${q.reading}</div>` : ''}
-      <div class="speak-hint">🔊 탭하여 발음 듣기</div>
-      <button class="speak-btn" id="speak-rev" style="margin:8px auto 0;display:flex;" onclick="event.stopPropagation();speakJapanese('${jpSafe}',this)">🔊</button>
+    <div class="rev-jp-card">
+      ${buildJpWordSpans(q.jp, S.showPron, S.pronMode, 'rev-jp-word', 'rev-jp-word-furi', 'rev-jp-word-text', 'rev-jp-word-row')}
+      ${q.reading && !S.showPron ? `<div class="rev-jp-reading">${q.reading}</div>` : ''}
+      <div class="speak-hint" onclick="speakJapanese('${jpSafe}',document.getElementById('speak-rev'))">🔊 탭하여 발음 듣기</div>
+      <button class="speak-btn" id="speak-rev" style="margin:8px auto 0;display:flex;" onclick="speakJapanese('${jpSafe}',this)">🔊</button>
     </div>
     <div class="quiz-choices" id="choices">
       ${allChoices.map((c,i)=>`
@@ -2772,8 +3437,7 @@ function renderReverse(q) {
           <span class="choice-key">${keys[i]}</span>${c}
         </button>`).join('')}
     </div>
-    <div class="quiz-feedback" id="feedback"></div>
-    <button class="quiz-continue-btn green" id="continue-btn" style="display:none;" onclick="nextQuestion()">계속하기</button>`;
+    <div class="quiz-feedback" id="feedback"></div>`;
   if(document.activeElement) document.activeElement.blur();
   // 역방향 타입은 자동 재생 (듣고 뜻 맞추기)
   setTimeout(() => speakJapanese(q.jp, document.getElementById('speak-rev')), 400);
@@ -2803,8 +3467,7 @@ function renderFill(q) {
           <span class="choice-key">${keys[i]}</span>${q.choices[origIdx]}
         </button>`).join('')}
     </div>
-    <div class="quiz-feedback" id="feedback"></div>
-    <button class="quiz-continue-btn green" id="continue-btn" style="display:none;" onclick="nextQuestion()">계속하기</button>`;
+    <div class="quiz-feedback" id="feedback"></div>`;
   if(document.activeElement) document.activeElement.blur();
   // 발음 타입은 자동 재생
   setTimeout(() => speakJapanese(q.jp, document.getElementById('speak-fill')), 400);
@@ -2840,8 +3503,7 @@ function renderArrange(q) {
       ${allTiles.map((t,i)=>`<button class="tile-btn" data-idx="${i}" data-text="${t.replace(/"/g,'&quot;')}" onclick="arrangeTileTap(this)">${t}</button>`).join('')}
     </div>
     <div class="quiz-feedback" id="feedback"></div>
-    <button class="arr-check-btn" id="arr-check" onclick="checkArrange('${jpSafe}')">확인하기</button>
-    <button class="quiz-continue-btn green" id="continue-btn" style="display:none;" onclick="nextQuestion()">계속하기</button>`;
+    <button class="arr-check-btn" id="arr-check" onclick="checkArrange('${jpSafe}')">확인하기</button>`;
   if(document.activeElement) document.activeElement.blur();
 }
 
@@ -2885,6 +3547,7 @@ function checkArrange(correctJp) {
   const userAnswer = placed.map(t=>t.textContent).join('');
   const isCorrect = userAnswer === correctJp;
   const feedback = document.getElementById('feedback');
+  const footer = document.getElementById('quiz-footer');
   const continueBtn = document.getElementById('continue-btn');
   document.querySelectorAll('.tile-btn,.placed-tile').forEach(t=>t.style.pointerEvents='none');
   document.getElementById('arr-check').style.display='none';
@@ -2907,7 +3570,7 @@ function checkArrange(correctJp) {
     addWeakItem(S.lesson.id, S.questions[S.qIndex]);
     setTimeout(()=>speakJapanese(correctJp), 700);
   }
-  feedback.style.display='block'; continueBtn.style.display='block';
+  footer.classList.add('show');
 }
 
 /* ═══════════════════════════════════════════
@@ -2930,11 +3593,16 @@ function startLesson(lesson) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-quiz').classList.add('active');
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.bottom-nav').style.display = 'none'; // 퀴즈 중 네비 숨김
 
   renderQuestion();
 }
 
 function renderQuestion() {
+  // 새 문제 시작 시 스크롤 맨 위로
+  const qScr = document.getElementById('screen-quiz');
+  if(qScr) qScr.scrollTop = 0;
+
   const total = S.questions.length;
   document.getElementById('quiz-prog').style.width = (S.qIndex / total * 100)+'%';
   let heartsHtml = '';
@@ -2963,6 +3631,7 @@ function selectAnswer(btn, chosen, correct) {
 
   const isCorrect = chosen === correct;
   const feedback = document.getElementById('feedback');
+  const footer = document.getElementById('quiz-footer');
   const continueBtn = document.getElementById('continue-btn');
 
   document.querySelectorAll('.choice-btn').forEach(b=>{
@@ -2998,8 +3667,7 @@ function selectAnswer(btn, chosen, correct) {
     if(isJapaneseText(correct)) setTimeout(()=>speakJapanese(correct), 1200);
   }
 
-  feedback.style.display = 'block';
-  continueBtn.style.display = 'block';
+  footer.classList.add('show'); // 계속하기 버튼 하단 고정 표시 (스크롤 불필요)
 }
 
 function nextQuestion() {
@@ -3015,11 +3683,18 @@ function nextQuestion() {
     return;
   }
 
+  // 새 문제 시작 시 footer 숨기고 스크롤 초기화
+  const footer = document.getElementById('quiz-footer');
+  if(footer) footer.classList.remove('show');
+  const body = document.getElementById('quiz-body');
+  if(body) body.scrollTop = 0;
+
   renderQuestion();
 }
 
 
 function quitQuiz() {
+  document.querySelector('.bottom-nav').style.display = 'flex';
   goTo('home');
 }
 
@@ -3044,6 +3719,7 @@ function checkDailyFirst(xpEarned) {
 }
 
 function showResult(finished) {
+  document.querySelector('.bottom-nav').style.display = 'flex'; // 퀴즈 종료 시 네비 복원
   const total = S.questions.length;
   const xpEarned = finished ? Math.round((S.score/total)*20 + 10) : Math.round((S.score/total)*10);
   S.xp += xpEarned;
@@ -3263,6 +3939,37 @@ function renderSettings() {
 
   document.getElementById('notif-time').value = S.notifTime;
 
+  // Pron toggle
+  const pt = document.getElementById('pron-toggle');
+  if(pt) S.showPron ? pt.classList.add('on') : pt.classList.remove('on');
+  const pw = document.getElementById('pron-mode-wrap');
+  if(pw) pw.style.display = S.showPron ? 'block' : 'none';
+  const prb = document.getElementById('pron-roman-btn');
+  const phb = document.getElementById('pron-hira-btn');
+  if(prb) prb.classList.toggle('active', S.pronMode === 'roman');
+  if(phb) phb.classList.toggle('active', S.pronMode === 'hira');
+
+}
+
+async function forceAppUpdate() {
+  const btn = document.getElementById('update-btn');
+  if(btn) { btn.textContent = '업데이트 중...'; btn.disabled = true; }
+  try {
+    // 1. 서비스 워커 강제 업데이트
+    if('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.update()));
+    }
+    // 2. 캐시 전체 삭제
+    if('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    }
+    // 3. 새로고침
+    window.location.reload(true);
+  } catch(e) {
+    window.location.reload(true);
+  }
 }
 
 function resetMyData() {
@@ -3335,6 +4042,22 @@ function toggleSound() {
   pushMyProgress();
 }
 
+function toggleShowPron() {
+  S.showPron = !S.showPron;
+  const btn = document.getElementById('pron-toggle');
+  const wrap = document.getElementById('pron-mode-wrap');
+  if(btn) S.showPron ? btn.classList.add('on') : btn.classList.remove('on');
+  if(wrap) wrap.style.display = S.showPron ? 'block' : 'none';
+  persistProgress();
+}
+
+function setPronMode(mode) {
+  S.pronMode = mode;
+  document.getElementById('pron-roman-btn').classList.toggle('active', mode === 'roman');
+  document.getElementById('pron-hira-btn').classList.toggle('active', mode === 'hira');
+  persistProgress();
+}
+
 /* ═══════════════════════════════════════════
    NOTIFICATIONS
 ═══════════════════════════════════════════ */
@@ -3399,12 +4122,28 @@ function updateNotifTime(val) {
   }
 }
 
-/* ─── 서비스 워커 등록 ──────────────────────── */
+/* ─── 서비스 워커 등록 + 자동 업데이트 ──────── */
 let _swReg = null;
 async function registerStudySW() {
   if(!('serviceWorker' in navigator)) return;
   try {
-    _swReg = await navigator.serviceWorker.register('/terriermon-sw.js');
+    _swReg = await navigator.serviceWorker.register('/terriermon-sw.js', {
+      updateViaCache: 'none'  // SW 파일 자체를 HTTP 캐시 없이 항상 새로 가져옴
+    });
+
+    // 새 SW가 활성화되면 → 자동 새로고침 (팀원들이 설치 없이 최신 버전 확인)
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload();
+    });
+
+    // 앱 열 때마다 업데이트 체크 (홈화면 앱도 포함)
+    _swReg.update();
+    document.addEventListener('visibilitychange', () => {
+      if(document.visibilityState === 'visible' && _swReg) {
+        _swReg.update();
+      }
+    });
+
     navigator.serviceWorker.addEventListener('message', evt => {
       // SW→페이지 메시지 처리 (필요 시 확장)
     });
@@ -3566,12 +4305,18 @@ function getNotifMsgs() {
 function fireNotification() {
   if(S.todayXP > 0) return;   // 이미 공부했으면 생략
   const _nm = getNotifMsgs(); const msg = _nm[Math.floor(Math.random() * _nm.length)];
+  // SW 경유로 알림 (백그라운드 탭에서도 동작, 권장 방식)
+  if(_swReg && _swReg.active && Notification.permission === 'granted') {
+    _swReg.active.postMessage({ type: 'FIRE_NOTIF', title: msg.title, body: msg.body });
+    return;
+  }
+  // 폴백: 직접 Notification
   if('Notification' in window && Notification.permission === 'granted') {
     try {
       new Notification(msg.title, {
         body: msg.body,
         tag:  'mission-study-reminder',
-        icon: 'https://em-content.zobj.net/source/google/387/rabbit_1f407.png',
+        icon: '/japan-mission-study/megumi-icon.jpg',
       });
       return;
     } catch(e) {}
@@ -3878,15 +4623,15 @@ function closeShop() {
 }
 
 function buyHearts() {
-  if(S.gems < 100) { showToast('💎 보석 부족', '보석이 부족해요! 보물 상자를 열어 보석을 모아보세요.', 'warning'); return; }
+  if(S.gems < 35) { showToast('💎 보석 부족', '보석이 부족해요! 보물 상자를 열어 보석을 모아보세요.', 'warning'); return; }
   if(S.hearts >= S.maxHearts) { showToast('❤️ 이미 최대', '하트가 이미 꽉 찼어요!', 'warning'); return; }
-  S.gems -= 100;
+  S.gems -= 35;
   S.hearts = S.maxHearts;
   persistProgress();
   pushMyProgress();
   updateGemDisplay();
   closeShop();
-  showToast('❤️ 하트 충전 완료!', `하트가 ${S.maxHearts}개로 충전됐어요! 💎 -100`, 'success');
+  showToast('❤️ 하트 충전 완료!', `하트가 ${S.maxHearts}개로 충전됐어요! 💎 -35`, 'success');
   renderHome();
 }
 
@@ -3990,6 +4735,7 @@ function buildProgressSnapshot() {
     allCompleted:[...S.allCompleted],
     notifEnabled:S.notifEnabled, notifTime:S.notifTime,
     darkMode:S.darkMode, sound:S.sound, qCount:S.qCount,
+    showPron:S.showPron, pronMode:S.pronMode,
     enabledCats:[...S.enabledCats],
     lessonStars: S.lessonStars,
     titles: [...S.titles],
@@ -4024,6 +4770,8 @@ function applyProgressSnapshot(snap) {
   S.darkMode = snap.darkMode ?? false;
   S.sound = snap.sound ?? true;
   S.qCount = snap.qCount ?? 5;
+  S.showPron = snap.showPron ?? false;
+  S.pronMode = snap.pronMode ?? 'roman';
   S.enabledCats = new Set(snap.enabledCats ?? []);
   S.lessonStars = snap.lessonStars ?? {};
   S.titles = new Set(snap.titles ?? []);
@@ -4159,6 +4907,7 @@ function loginAs(uid, name) {
     S.gems=0; S.streakShield=false; S.couponRevealed=false;
     S.notifEnabled=true; S.notifTime='09:00';
     S.darkMode=false; S.sound=true; S.qCount=5;
+    S.showPron=false; S.pronMode='roman';
     S.enabledCats=new Set(['greet','intro','faith','mission','lords','creed','gospel','praise']);
     S.lastHeartRefillDate = new Date().toDateString(); // 초기화 시 오늘 날짜 기록
   }
@@ -4392,8 +5141,10 @@ function pushMyProgress() {
   // lastStudied는 실제 학습한 날만 업데이트 (로그인만 해도 today로 덮어쓰지 않음)
   const lastStudied = S.todayXP > 0 ? today : (S.lastStreakDate || '');
   // update() 사용: 명시된 필드만 갱신하고 나머지는 보존 (set()은 전체 덮어쓰기로 데이터 손실 위험)
+  // 기본 닉네임(선교대원 X호)은 Firebase에 올리지 않음 → 관리자가 설정한 커스텀 이름 보존
+  const isDefaultName = /^선교대원\s*\d+\s*호$/.test(CU.name.trim());
   _db.ref(`team/${CU.uid}`).update({
-    name:           CU.name,
+    ...(isDefaultName ? {} : {name: CU.name}),
     xp:             S.xp,
     todayXP:        S.todayXP,
     streak:         S.streak,
@@ -4420,7 +5171,9 @@ function pushMyProgress() {
     darkMode:           S.darkMode,
     qCount:             S.qCount,
     dailyGoal:          S.dailyGoal,
-    pw:                 (getAllUsers()[CU.uid] || {}).pw || '',
+    heartsSentToday:      S.heartsSentToday,
+    heartRequestedToday:  S.heartRequestedToday || '',
+    pw:                   (getAllUsers()[CU.uid] || {}).pw || '',
   });
 }
 
@@ -4484,9 +5237,25 @@ function restoreFromFirebase() {
       }
       if(data.qCount          !== undefined) S.qCount          = data.qCount;
       if(data.dailyGoal       !== undefined) S.dailyGoal       = data.dailyGoal;
-      if(data.pw) {
+      // heartsSentToday: 오늘 날짜와 일치할 때만 복원 (날짜 지난 건 무시)
+      if(data.heartsSentToday && data.heartsSentToday.date === new Date().toDateString()) {
+        S.heartsSentToday = data.heartsSentToday;
+      }
+      if(data.heartRequestedToday === new Date().toDateString()) {
+        S.heartRequestedToday = data.heartRequestedToday;
+      }
+      if(data.pw || data.name) {
         const users = getAllUsers();
-        if(users[CU.uid]) { users[CU.uid].pw = data.pw; saveAllUsers(users); }
+        if(users[CU.uid]) {
+          if(data.pw) users[CU.uid].pw = data.pw;
+          // Firebase에 저장된 이름이 기본값이 아닌 경우 → 로컬+CU 이름 복원
+          if(data.name && !/^선교대원\s*\d+\s*호$/.test(data.name)) {
+            users[CU.uid].name = data.name;
+            CU.name = data.name;
+            updateTopbarUser();
+          }
+          saveAllUsers(users);
+        }
       }
       persistProgress();  // localStorage에도 저장
       renderHome();       // 화면 업데이트
@@ -4659,8 +5428,21 @@ function renderTeam() {
   // TOP 3
   renderTop3(members);
 
-  // 전체 랭킹
-  renderRankList(members);
+  // 하트 요청 현황 fetch 후 랭킹 렌더
+  const today2 = new Date().toDateString();
+  if(_db) {
+    _db.ref('heartRequests').once('value', snap => {
+      const reqs = snap.val() || {};
+      const activeReqs = new Set(
+        Object.entries(reqs).filter(([,d]) => d.date === today2).map(([uid]) => uid)
+      );
+      renderRankList(members, activeReqs);
+      renderHeartReqSection(activeReqs);
+    });
+  } else {
+    renderRankList(members, new Set());
+    renderHeartReqSection(new Set());
+  }
 
   // 마지막 업데이트
   document.getElementById('team-last-updated').textContent =
@@ -4688,11 +5470,11 @@ function renderFlightTrack(members) {
     rank: members.indexOf(m) + 1,
   })).sort((a, b) => a.pct - b.pct);
 
-  // 5% 이내 근접 비행기 그룹화
+  // 3% 이내 근접 비행기 그룹화 (겹침 방지, 단 각 순위 모두 표시)
   const groups = [];
   planes.forEach(p => {
     const last = groups[groups.length - 1];
-    if(last && Math.abs(last.pct - p.pct) <= 5) {
+    if(last && Math.abs(last.pct - p.pct) <= 3) {
       last.items.push(p);
     } else {
       groups.push({ pct: p.pct, items: [p] });
@@ -4702,18 +5484,27 @@ function renderFlightTrack(members) {
   groups.forEach(g => {
     const isMe = g.items.some(p => p.m.isMe);
     let label;
+    let nameLabel;
     if(g.items.length === 1) {
       label = g.items[0].m.isMe ? '나' : g.items[0].rank + '위';
+      nameLabel = g.items[0].m.name || '';
     } else {
+      // 그룹 내 모든 순위 표시 (예: 3·4위)
       const nonMeRanks = g.items.filter(p => !p.m.isMe).map(p => p.rank + '위');
-      if(isMe && nonMeRanks.length > 0) label = nonMeRanks[0] + ' 또는 나';
+      const rankStr = nonMeRanks.join('·');
+      if(isMe && nonMeRanks.length > 0) label = rankStr + '·나';
       else if(isMe) label = '나';
-      else label = nonMeRanks[0];
+      else label = rankStr;
+      // 이름: 최대 2명까지 표시
+      const names = g.items.map(p => p.m.name || '').filter(Boolean);
+      nameLabel = names.length > 2
+        ? `${names[0]}·${names[1]} 외 ${names.length - 2}`
+        : names.join('·');
     }
     const div = document.createElement('div');
     div.className = `flight-plane${isMe?' me':''}`;
     div.style.left = `${g.pct}%`;
-    div.innerHTML = `<span class="fp-rank">${label}</span>✈️`;
+    div.innerHTML = `<span class="fp-rank">${label}</span>✈️${nameLabel ? `<span class="fp-name">${nameLabel}</span>` : ''}`;
     container.appendChild(div);
   });
 }
@@ -4737,10 +5528,20 @@ function renderTop3(members) {
   });
 }
 
-function renderRankList(members) {
+function renderRankList(members, activeReqs = new Set()) {
   const list = document.getElementById('rank-list');
   list.innerHTML = '';
   const colors = ['#58CC02','#1CB0F6','#CE82FF','#FF9600','#FF6B9D','#00CDC1','#FFD900','#FF4B4B','#46A302','#0085C7'];
+
+  // 하트 선물 현황 배너
+  const sentToday = getTodayHeartsSent();
+  const remaining = 5 - sentToday.length;
+  const banner = document.createElement('div');
+  banner.style.cssText = 'padding:10px 16px 4px;font-size:13px;color:var(--text2);text-align:center;';
+  banner.innerHTML = remaining > 0
+    ? `❤️ 오늘 팀원에게 하트를 <b style="color:#FF4B4B">${remaining}번</b> 더 선물할 수 있어요`
+    : `❤️ 오늘 선물을 모두 완료했어요! 내일 또 선물할 수 있어요 🎉`;
+  list.appendChild(banner);
 
   members.forEach((m, i) => {
     const rank = i + 1;
@@ -4750,25 +5551,90 @@ function renderRankList(members) {
     const row      = document.createElement('div');
     row.className  = `rank-item${m.doneToday?' done':''}${m.isMe?' me':''}`;
 
-    const canGift = !m.isMe && S.hearts > 1;
-    const giftBtn = m.isMe ? '' : `<button class="gift-heart-btn" onclick="giftHeart('${m.uid}','${m.name.replace(/'/g,'')}')" ${canGift?'':'disabled'} title="하트 선물">❤️+1</button>`;
+    const sentToday = getTodayHeartsSent();
+    const canGift = !m.isMe && sentToday.length < 5 && !sentToday.includes(m.uid);
+    const alreadySent = !m.isMe && sentToday.includes(m.uid);
+    const giftBtn = m.isMe ? '' : `<button class="gift-heart-btn" onclick="giftHeart('${m.uid}','${m.name.replace(/'/g,'')}')" ${canGift?'':'disabled'} title="${alreadySent?'오늘 이미 선물했어요':sentToday.length>=5?'오늘 선물 5회 완료':'하트 선물'}">${alreadySent?'❤️✓':'❤️+1'}</button>`;
     const nudgeBtn = m.isMe ? '' : m.doneToday
       ? `<div class="done-check">✅</div>`
       : `<button class="nudge-btn" onclick="openNudge('${m.uid}','${m.name.replace(/'/g,'')}')" title="찌르기">👆</button>`;
     const actionBtn = nudgeBtn + giftBtn;
 
+    const reqBadge = activeReqs.has(m.uid) ? `<span class="heart-req-badge">❤️ 요청</span>` : '';
     row.innerHTML = `
       <div class="rank-num ${numClass}">${rank}</div>
       <div class="rank-avatar" style="background:${color}">${initial}</div>
       <div class="rank-info">
         <div class="rank-name">${m.isMe ? '⭐ ' + m.name + ' (나)' : m.name}</div>
-        <div class="rank-sub">🔥 ${m.streak}일 연속 · 오늘 ${m.todayXP} XP</div>
+        <div class="rank-sub">🔥 ${m.streak}일 연속 · 오늘 ${m.todayXP} XP${reqBadge ? ' ' + reqBadge : ''}</div>
       </div>
       <div class="rank-xp ${m.xp===0?'zero':''}${m.isMe?' rank-xp-me':''}">${m.xp} XP</div>
       ${actionBtn}
     `;
     list.appendChild(row);
   });
+}
+
+/* ── 하트 요청 ──────────────────────────── */
+function renderHeartReqSection(activeReqs) {
+  const section = document.getElementById('heart-req-section');
+  if(!section) return;
+  const today = new Date().toDateString();
+  const alreadyRequested = S.heartRequestedToday === today;
+  section.innerHTML = `
+    <div class="heart-req-card">
+      <div class="heart-req-card-title">❤️ 팀원에게 하트 요청하기</div>
+      ${alreadyRequested
+        ? `<div class="heart-req-sent-label">✅ 오늘 요청을 보냈어요! 팀원이 하트를 보내줄 거예요 🙏</div>`
+        : `<button class="heart-req-send-btn" onclick="requestHeart()">하트 요청 보내기</button>
+           <div style="font-size:11px;color:var(--text2);margin-top:8px;">팀원 전체에게 알림이 전송돼요 · 하루 1회</div>`
+      }
+    </div>`;
+}
+
+async function requestHeart() {
+  const today = new Date().toDateString();
+  if(S.heartRequestedToday === today) {
+    showToast('❤️ 이미 요청했어요', '오늘은 이미 하트 요청을 보냈어요!', 'warning'); return;
+  }
+  if(!_db) { showToast('❌ 오프라인', '온라인 상태에서만 요청할 수 있어요', 'warning'); return; }
+
+  // Firebase에 요청 저장
+  S.heartRequestedToday = today;
+  persistProgress();
+  _db.ref(`heartRequests/${CU.uid}`).set({ name: CU.name, date: today, ts: Date.now() });
+
+  // 모든 팀원에게 푸시
+  let sentCount = 0;
+  for(const a of PRESET_ACCOUNTS) {
+    if(a.id === CU.uid) continue;
+    try {
+      const subSnap = await _db.ref(`push_subs/${a.id}`).once('value');
+      const sub = subSnap.val();
+      if(sub) {
+        fetch(PUSH_SERVER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            subscription: sub,
+            title: `❤️ ${CU.name}${josa(CU.name,'이가')} 하트를 요청해요!`,
+            body: `팀원 화면에서 ${CU.name}님께 하트를 선물해주세요 🙏`,
+            icon: '/japan-mission-study/megumi-icon.jpg',
+          }),
+        }).catch(() => {});
+        sentCount++;
+      }
+      // 앱 열려있는 팀원용 Firebase nudge
+      _db.ref(`nudges/${a.id}`).push({
+        from: CU.uid, fromName: CU.name,
+        message: `${CU.name}${josa(CU.name,'이가')} 하트를 요청했어요! 팀원 화면에서 ❤️+1 버튼을 눌러주세요 🙏`,
+        ts: Date.now(), type: 'heartRequest',
+      });
+    } catch(e) {}
+  }
+
+  renderTeam();
+  showToast('❤️ 요청 완료!', `팀원 ${sentCount}명에게 하트 요청을 보냈어요!`, 'success');
 }
 
 /* ── 찌르기 모달 ──────────────────────────── */
@@ -4815,9 +5681,54 @@ function closeNudge(e) {
 /* ═══════════════════════════════════════════
    INIT
 ═══════════════════════════════════════════ */
+/* iOS rubber-band 방지: 모든 스크롤 영역의 경계 bounce 차단 */
+function initScrollBounceFix() {
+  let startY = 0;
+
+  // 터치 대상에서 가장 가까운 스크롤 가능 조상 찾기
+  function findScroller(el) {
+    while(el && el !== document.documentElement) {
+      const ov = window.getComputedStyle(el).overflowY;
+      if((ov === 'auto' || ov === 'scroll') && el.scrollHeight > el.clientHeight) {
+        return el;
+      }
+      el = el.parentElement;
+    }
+    return null;
+  }
+
+  document.addEventListener('touchstart', e => {
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', e => {
+    const scroller = findScroller(e.target);
+    const dy = e.touches[0].clientY - startY;
+    if(!scroller) {
+      // 스크롤 영역 없음 → body bounce 완전 차단
+      e.preventDefault();
+      return;
+    }
+    const atTop    = scroller.scrollTop <= 0;
+    const atBottom = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 1;
+    if((atTop && dy > 0) || (atBottom && dy < 0)) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+}
+
 function init() {
   seedPresetAccounts();
   registerStudySW();   // 서비스 워커 등록
+  initScrollBounceFix(); // iOS 스크롤 bounce 방지 (전체 화면 적용)
+  initScrollTopBtn();    // 홈 상단 이동 플로팅 버튼
+
+  // 단어 팝업 외부 클릭 시 닫기
+  document.addEventListener('click', e => {
+    try {
+      if (!e.target.closest('.jp-word,.rev-jp-word')) hideWordPopup();
+    } catch(_) {}
+  }, false);
 
   // Check for existing session
   const sessionUid = getCurrentSession();
