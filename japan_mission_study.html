@@ -13,6 +13,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 <script src="./lessons.js"></script>
+<script src="./word_data.js"></script>
 <style>
 :root {
   --green:#58CC02;--green-dk:#46A302;--green-lt:#D7FFB8;
@@ -1187,7 +1188,45 @@ body{
 .quiz-jp{font-size:16px;color:var(--text2);margin-top:4px;font-weight:600;}
 
 /* ── FURIGANA (pronunciation above JP text) ──── */
-.quiz-jp-wrap{display:inline-flex;flex-direction:column;align-items:flex-start;gap:1px;}
+.quiz-jp-wrap{display:flex;flex-direction:column;align-items:flex-start;gap:1px;}
+/* ── WORD TAP ──────────────────────────────────── */
+.jp-word-row{display:flex;flex-wrap:wrap;gap:2px;align-items:flex-end;}
+.jp-word{display:inline-flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;
+  padding:2px 3px;border-radius:6px;transition:background .12s;}
+.jp-word:active{background:var(--blue-lt);}
+.jp-word.tapped{background:var(--blue-lt);}
+.jp-word-furi{font-size:9px;color:var(--blue);font-weight:600;line-height:1;white-space:nowrap;min-height:10px;}
+[data-theme="dark"] .jp-word-furi{color:#7dd8fd;}
+.jp-word-text{font-size:20px;font-weight:800;color:var(--text);line-height:1.2;
+  border-bottom:1.5px dashed var(--border);}
+.jp-word:active .jp-word-text,.jp-word.tapped .jp-word-text{border-color:var(--blue);}
+
+/* Rev card word tap */
+.rev-jp-word-row{display:flex;flex-wrap:wrap;gap:3px;align-items:flex-end;justify-content:center;margin-bottom:4px;}
+.rev-jp-word{display:inline-flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;
+  padding:4px 4px 2px;border-radius:8px;transition:background .12s;}
+.rev-jp-word:active,.rev-jp-word.tapped{background:rgba(28,176,246,.12);}
+.rev-jp-word-furi{font-size:10px;color:var(--blue);font-weight:600;line-height:1;min-height:11px;white-space:nowrap;}
+[data-theme="dark"] .rev-jp-word-furi{color:#7dd8fd;}
+.rev-jp-word-text{font-size:28px;font-weight:800;color:var(--text);line-height:1.2;
+  border-bottom:1.5px dashed rgba(28,176,246,.4);}
+.rev-jp-word:active .rev-jp-word-text,.rev-jp-word.tapped .rev-jp-word-text{border-color:var(--blue);}
+
+/* Word meaning popup */
+#word-popup{
+  position:fixed;z-index:300;
+  background:var(--bg);border:2px solid var(--blue);border-radius:14px;
+  padding:10px 14px;box-shadow:0 4px 20px rgba(0,0,0,.2);
+  min-width:120px;max-width:220px;pointer-events:none;
+  opacity:0;transform:translateY(6px) scale(.95);
+  transition:opacity .15s,transform .15s;
+}
+#word-popup.show{opacity:1;transform:translateY(0) scale(1);}
+.wp-surface{font-size:18px;font-weight:800;color:var(--text);margin-bottom:2px;}
+.wp-reading{font-size:12px;color:var(--blue);font-weight:600;margin-bottom:4px;}
+[data-theme="dark"] .wp-reading{color:#7dd8fd;}
+.wp-meaning{font-size:13px;font-weight:700;color:var(--text2);}
+.wp-no-meaning{font-size:12px;color:var(--text2);font-style:italic;}
 .quiz-jp-furigana{font-size:10px;color:var(--blue);font-weight:600;letter-spacing:.03em;line-height:1.2;white-space:pre-wrap;}
 [data-theme="dark"] .quiz-jp-furigana{color:#7dd8fd;}
 .rev-jp-furigana{font-size:12px;color:var(--blue);font-weight:600;letter-spacing:.03em;margin-bottom:4px;}
@@ -1618,6 +1657,11 @@ body{
 
 <!-- ══════════════════ HOME SCREEN ══════════════════ -->
 <button id="scroll-top-btn" onclick="document.getElementById('screen-home').scrollTo({top:0,behavior:'smooth'})">↑</button>
+<div id="word-popup">
+  <div class="wp-surface" id="wp-surface"></div>
+  <div class="wp-reading" id="wp-reading"></div>
+  <div class="wp-meaning" id="wp-meaning"></div>
+</div>
 <div class="screen" id="screen-home">
   <div class="topbar">
     <div class="topbar-logo">메구미링고</div>
@@ -3233,6 +3277,74 @@ function getPronText(q) {
   return S.pronMode === 'hira' ? (q.hira || '') : (q.romaji || '');
 }
 
+/* ── WORD TAP ──────────────────────────────────── */
+let _wpTimer = null;
+
+function showWordPopup(el, surface, reading, meaning) {
+  const popup = document.getElementById('word-popup');
+  document.querySelectorAll('.jp-word.tapped,.rev-jp-word.tapped').forEach(e => e.classList.remove('tapped'));
+  el.classList.add('tapped');
+  document.getElementById('wp-surface').textContent = surface;
+  document.getElementById('wp-reading').textContent = reading !== surface ? reading : '';
+  const mEl = document.getElementById('wp-meaning');
+  if (meaning) {
+    mEl.className = 'wp-meaning';
+    mEl.textContent = meaning;
+  } else {
+    mEl.className = 'wp-no-meaning';
+    mEl.textContent = '의미 정보 없음';
+  }
+
+  // Position popup near the tapped element
+  const rect = el.getBoundingClientRect();
+  const pw = 220, ph = 90;
+  let top = rect.bottom + 8;
+  let left = rect.left + rect.width / 2 - pw / 2;
+  if (left < 8) left = 8;
+  if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+  if (top + ph > window.innerHeight - 20) top = rect.top - ph - 8;
+  popup.style.top = top + 'px';
+  popup.style.left = left + 'px';
+  popup.classList.add('show');
+
+  clearTimeout(_wpTimer);
+  _wpTimer = setTimeout(hideWordPopup, 2500);
+}
+
+function hideWordPopup() {
+  document.getElementById('word-popup').classList.remove('show');
+  document.querySelectorAll('.jp-word.tapped,.rev-jp-word.tapped').forEach(e => e.classList.remove('tapped'));
+}
+
+function buildJpWordSpans(jp, showPron, pronMode, wordCls, furiCls, textCls, rowCls) {
+  const tokens = (typeof WORD_DATA !== 'undefined' && WORD_DATA[jp]) ? WORD_DATA[jp] : null;
+  if (!tokens) {
+    // Fallback: whole text as one clickable span
+    const furi = showPron ? (pronMode === 'hira' ? '' : '') : '';
+    return `<div class="${rowCls}">
+      <div class="${wordCls}" onclick="showWordPopup(this,'${jp.replace(/'/g,"\\'")}','','')">
+        <span class="${furiCls}"></span>
+        <span class="${textCls}">${jp}</span>
+      </div>
+    </div>`;
+  }
+  const spans = tokens.map(t => {
+    const surface = t[0];
+    const reading = t[1] || surface;
+    const meaning = t[2] || '';
+    const furiText = showPron
+      ? (pronMode === 'hira' ? reading : '') : '';
+    const surfSafe = surface.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    const readSafe = reading.replace(/'/g,"\\'");
+    const meanSafe = meaning.replace(/'/g,"\\'");
+    return `<div class="${wordCls}" onclick="showWordPopup(this,'${surfSafe}','${readSafe}','${meanSafe}')">
+      <span class="${furiCls}">${furiText}</span>
+      <span class="${textCls}">${surface}</span>
+    </div>`;
+  }).join('');
+  return `<div class="${rowCls}">${spans}</div>`;
+}
+
 function renderMCQ(q) {
   const total = S.questions.length;
   const keys = ['A','B','C','D'];
@@ -3250,8 +3362,7 @@ function renderMCQ(q) {
     <div class="quiz-question">${q.q}</div>
     ${showJp ? `<div class="quiz-jp-row">
       <div class="quiz-jp-wrap" style="flex:1;">
-        ${getPronText(q) ? `<div class="quiz-jp-furigana">${getPronText(q)}</div>` : ''}
-        <div class="quiz-jp">${q.jp}</div>
+        ${buildJpWordSpans(q.jp, S.showPron, S.pronMode, 'jp-word', 'jp-word-furi', 'jp-word-text', 'jp-word-row')}
       </div>
       <button class="speak-btn" id="speak-mcq" onclick="speakJapanese('${jpSafe}',this)" title="발음 듣기">🔊</button>
     </div>` : (q.jp ? `<div class="quiz-jp-row"><button class="speak-btn" id="speak-mcq" onclick="speakJapanese('${jpSafe}',this)" title="발음 듣기">🔊</button></div>` : '')}
@@ -3293,10 +3404,10 @@ function renderReverse(q) {
   body.innerHTML = `
     <div class="quiz-prompt"><span class="quiz-type-badge qtb-rev">🔄 뜻 맞추기</span>&nbsp;${S.qIndex+1} / ${total}</div>
     <div class="quiz-question" style="font-size:16px;">이 일본어의 뜻은?</div>
-    <div class="rev-jp-card" onclick="speakJapanese('${jpSafe}',document.getElementById('speak-rev'))">
-      ${getPronText(q) ? `<div class="rev-jp-furigana">${getPronText(q)}</div>` : ''}
-      <div class="rev-jp-text">${q.jp}</div>
+    <div class="rev-jp-card">
+      ${buildJpWordSpans(q.jp, S.showPron, S.pronMode, 'rev-jp-word', 'rev-jp-word-furi', 'rev-jp-word-text', 'rev-jp-word-row')}
       ${q.reading && !S.showPron ? `<div class="rev-jp-reading">${q.reading}</div>` : ''}
+      <div onclick="speakJapanese('${jpSafe}',document.getElementById('speak-rev'))" style="margin-top:6px;font-size:11px;color:var(--text2);cursor:pointer;">🔊 탭하여 발음 듣기</div>
       <div class="speak-hint">🔊 탭하여 발음 듣기</div>
       <button class="speak-btn" id="speak-rev" style="margin:8px auto 0;display:flex;" onclick="event.stopPropagation();speakJapanese('${jpSafe}',this)">🔊</button>
     </div>
@@ -5583,6 +5694,11 @@ function init() {
   registerStudySW();   // 서비스 워커 등록
   initScrollBounceFix(); // iOS 스크롤 bounce 방지 (전체 화면 적용)
   initScrollTopBtn();    // 홈 상단 이동 플로팅 버튼
+
+  // 단어 팝업 외부 클릭 시 닫기
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.jp-word,.rev-jp-word')) hideWordPopup();
+  }, true);
 
   // Check for existing session
   const sessionUid = getCurrentSession();

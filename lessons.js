@@ -1257,7 +1257,7 @@ const LESSONS = [
       },
       {
         q: '"신약성경"에 해당하는 일본어는?',
-        jp: '新約聖書', hira:'しんやくせいしょ', romaji:'shin'yaku seisho',
+        jp: '新約聖書', hira:'しんやくせいしょ', romaji:'shinyaku seisho',
         reading: '신야쿠 세이쇼',
         choices: ['旧約聖書', '新約聖書', '新聖書', '最新聖書'],
         correct: 1
