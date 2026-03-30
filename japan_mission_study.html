@@ -2064,14 +2064,14 @@ body{
           <div class="sr-label">로마자 발음 표시</div>
           <div class="sr-sub" style="font-size:12px;letter-spacing:.04em;">ni · hon · go</div>
         </div>
-        <button class="toggle" id="pron-roman-toggle" onclick="setPronToggle('roman')"></button>
+        <button class="toggle" id="pron-roman-toggle" onclick="toggleRomaji()"></button>
       </div>
       <div class="setting-row">
         <div class="sr-left">
           <div class="sr-label">히라가나 발음 표시</div>
           <div class="sr-sub">にほんご</div>
         </div>
-        <button class="toggle" id="pron-hira-toggle" onclick="setPronToggle('hira')"></button>
+        <button class="toggle" id="pron-hira-toggle" onclick="toggleHira()"></button>
       </div>
     </div>
 
@@ -2328,7 +2328,7 @@ const S = {
   notifEnabled:true, notifTime:'09:00',
   darkMode:false, sound:true,
   qCount:5,
-  showPron:false, pronMode:'roman',
+  showRomaji:false, showHira:false,
   enabledCats:new Set(),
   lessonStars: {},  // lessonId → 0,1,2,3
   titles: new Set(),        // earned title strings
@@ -3295,8 +3295,8 @@ function dedupChoices(q) {
 }
 
 function getPronText(q) {
-  if (!S.showPron) return '';
-  return S.pronMode === 'hira' ? (q.hira || '') : (q.romaji || '');
+  if (!S.showRomaji && !S.showHira) return '';
+  return S.showRomaji ? (q.romaji || '') : (q.hira || '');
 }
 
 /* ── WORD TAP ──────────────────────────────────── */
@@ -3410,34 +3410,33 @@ function isPureKana(str) {
 }
 
 // 보기 버튼 전용: 클릭 핸들러 없이 후리가나만 표시 (단어 팝업 미발동)
-function buildChoiceHtml(text, showPron, pronMode) {
-  if (!showPron) return text;
+function buildChoiceHtml(text, showRomaji, showHira) {
+  if (!showRomaji && !showHira) return text;
   const tokens = (typeof WORD_DATA !== 'undefined' && WORD_DATA[text]) ? WORD_DATA[text] : null;
 
   if (!tokens) {
-    // WORD_DATA 없는 경우 — 순수 가나(히라가나/카타카나)면 직접 변환
-    if(pronMode === 'roman' && isPureKana(text)) {
+    // WORD_DATA 없는 경우 — 순수 가나면 직접 변환
+    if(showRomaji && isPureKana(text)) {
       const furi = hiraganaToRomaji(text);
       return `<span class="choice-furi-word"><span class="choice-furi-rt">${furi}</span><span>${text}</span></span>`;
     }
-    // 히라가나 모드에서 한자가 섞인 보기 → 표시 불가, 그냥 텍스트만
     return text;
   }
 
   return '<span class="choice-furi-wrap">' +
     tokens.map(t => {
       const surface = t[0], reading = t[1] || surface;
-      const furi = pronMode === 'hira' ? reading
-                 : pronMode === 'roman' ? hiraganaToRomaji(reading)
+      // 둘 다 켜진 경우: 로마자 우선 표시 (히라가나는 단어 팝업에서 확인 가능)
+      const furi = showRomaji ? hiraganaToRomaji(reading)
+                 : showHira  ? reading
                  : '';
       return `<span class="choice-furi-word"><span class="choice-furi-rt">${furi}</span><span>${surface}</span></span>`;
     }).join('') + '</span>';
 }
 
-function buildJpWordSpans(jp, showPron, pronMode, wordCls, furiCls, textCls, rowCls) {
+function buildJpWordSpans(jp, showRomaji, showHira, wordCls, furiCls, textCls, rowCls) {
   const tokens = (typeof WORD_DATA !== 'undefined' && WORD_DATA[jp]) ? WORD_DATA[jp] : null;
   if (!tokens) {
-    // Fallback: whole text as one clickable span
     return `<div class="${rowCls}">
       <div class="${wordCls}" onclick="showWordPopup(this,'${jp.replace(/'/g,"\\'")}','','')">
         <span class="${furiCls}"></span>
@@ -3449,11 +3448,10 @@ function buildJpWordSpans(jp, showPron, pronMode, wordCls, furiCls, textCls, row
     const surface = t[0];
     const reading = t[1] || surface;
     const meaning = t[2] || '';
-    const furiText = showPron
-      ? (pronMode === 'hira' ? reading
-       : pronMode === 'roman' ? hiraganaToRomaji(reading)
-       : '')
-      : '';
+    // 둘 다 켜진 경우: 로마자 우선
+    const furiText = showRomaji ? hiraganaToRomaji(reading)
+                   : showHira  ? reading
+                   : '';
     const surfSafe = surface.replace(/'/g,"\\'").replace(/"/g,'&quot;');
     const readSafe = reading.replace(/'/g,"\\'");
     const meanSafe = meaning.replace(/'/g,"\\'");
@@ -3482,16 +3480,16 @@ function renderMCQ(q) {
     <div class="quiz-question">${q.q}</div>
     ${showJp ? `<div class="quiz-jp-row">
       <div class="quiz-jp-wrap" style="flex:1;">
-        ${buildJpWordSpans(q.jp, S.showPron, S.pronMode, 'jp-word', 'jp-word-furi', 'jp-word-text', 'jp-word-row')}
+        ${buildJpWordSpans(q.jp, S.showRomaji, S.showHira, 'jp-word', 'jp-word-furi', 'jp-word-text', 'jp-word-row')}
       </div>
       <button class="speak-btn" id="speak-mcq" onclick="speakJapanese('${jpSafe}',this)" title="발음 듣기">🔊</button>
     </div>` : (q.jp ? `<div class="quiz-jp-row"><button class="speak-btn" id="speak-mcq" onclick="speakJapanese('${jpSafe}',this)" title="발음 듣기">🔊</button></div>` : '')}
-    ${S.showPron && S.pronMode === 'roman' && q.romaji ? `<div class="quiz-jp-furigana" style="margin:2px 0 4px;">${q.romaji}</div>` : ''}
-    ${showReading && !S.showPron ? `<div class="reading-bubble"><span class="reading-label">발음</span><span class="reading-text">${q.reading}</span></div>` : ''}
+    ${S.showRomaji && q.romaji ? `<div class="quiz-jp-furigana" style="margin:2px 0 4px;">${q.romaji}</div>` : ''}
+    ${showReading && !S.showRomaji && !S.showHira ? `<div class="reading-bubble"><span class="reading-label">발음</span><span class="reading-text">${q.reading}</span></div>` : ''}
     <div class="quiz-choices" id="choices">
       ${shuffled.map((origIdx,i)=>`
         <button class="choice-btn" data-choice="${q.choices[origIdx].replace(/"/g,'&quot;')}" onclick="selectAnswer(this,'${q.choices[origIdx].replace(/'/g,"\\'")}','${correctChoice.replace(/'/g,"\\'")}')">
-          <span class="choice-key">${keys[i]}</span>${buildChoiceHtml(q.choices[origIdx], S.showPron, S.pronMode)}
+          <span class="choice-key">${keys[i]}</span>${buildChoiceHtml(q.choices[origIdx], S.showRomaji, S.showHira)}
         </button>`).join('')}
     </div>
     <div class="quiz-feedback" id="feedback"></div>`;
@@ -3526,9 +3524,9 @@ function renderReverse(q) {
     <div class="quiz-prompt"><span class="quiz-type-badge qtb-rev">🔄 뜻 맞추기</span>&nbsp;${S.qIndex+1} / ${total}</div>
     <div class="quiz-question" style="font-size:16px;">이 일본어의 뜻은?</div>
     <div class="rev-jp-card">
-      ${buildJpWordSpans(q.jp, S.showPron, S.pronMode, 'rev-jp-word', 'rev-jp-word-furi', 'rev-jp-word-text', 'rev-jp-word-row')}
-      ${S.showPron && S.pronMode === 'roman' && q.romaji ? `<div class="rev-jp-furigana">${q.romaji}</div>` : ''}
-      ${q.reading && !S.showPron ? `<div class="rev-jp-reading">${q.reading}</div>` : ''}
+      ${buildJpWordSpans(q.jp, S.showRomaji, S.showHira, 'rev-jp-word', 'rev-jp-word-furi', 'rev-jp-word-text', 'rev-jp-word-row')}
+      ${S.showRomaji && q.romaji ? `<div class="rev-jp-furigana">${q.romaji}</div>` : ''}
+      ${q.reading && !S.showRomaji && !S.showHira ? `<div class="rev-jp-reading">${q.reading}</div>` : ''}
       <div class="speak-hint" onclick="speakJapanese('${jpSafe}',document.getElementById('speak-rev'))">🔊 탭하여 발음 듣기</div>
       <button class="speak-btn" id="speak-rev" style="margin:8px auto 0;display:flex;" onclick="speakJapanese('${jpSafe}',this)">🔊</button>
     </div>
@@ -3565,7 +3563,7 @@ function renderFill(q) {
     <div class="quiz-choices" id="choices">
       ${shuffled.map((origIdx,i)=>`
         <button class="choice-btn" data-choice="${q.choices[origIdx].replace(/"/g,'&quot;')}" onclick="selectAnswer(this,'${q.choices[origIdx].replace(/'/g,"\\'")}','${correctChoice.replace(/'/g,"\\'")}')">
-          <span class="choice-key">${keys[i]}</span>${buildChoiceHtml(q.choices[origIdx], S.showPron, S.pronMode)}
+          <span class="choice-key">${keys[i]}</span>${buildChoiceHtml(q.choices[origIdx], S.showRomaji, S.showHira)}
         </button>`).join('')}
     </div>
     <div class="quiz-feedback" id="feedback"></div>`;
@@ -3598,7 +3596,7 @@ function renderArrange(q) {
     <div class="arr-speak-row">
       <div style="flex:1;">
         <div class="quiz-jp" style="font-size:14px;">${hint}</div>
-        ${S.showPron && S.pronMode === 'roman' && q.romaji ? `<div class="quiz-jp-furigana" style="margin-top:2px;">${q.romaji}</div>` : ''}
+        ${S.showRomaji && q.romaji ? `<div class="quiz-jp-furigana" style="margin-top:2px;">${q.romaji}</div>` : ''}
       </div>
       <button class="speak-btn" id="speak-arr" onclick="speakJapanese('${jpSafe}',this)" title="발음 듣기">🔊</button>
     </div>
@@ -4044,11 +4042,11 @@ function renderSettings() {
 
   document.getElementById('notif-time').value = S.notifTime;
 
-  // Pron toggles (로마자 / 히라가나 독립 토글)
+  // Pron toggles (로마자 / 히라가나 완전 독립)
   const prt = document.getElementById('pron-roman-toggle');
   const pht = document.getElementById('pron-hira-toggle');
-  if(prt) (S.showPron && S.pronMode === 'roman') ? prt.classList.add('on') : prt.classList.remove('on');
-  if(pht) (S.showPron && S.pronMode === 'hira')  ? pht.classList.add('on') : pht.classList.remove('on');
+  if(prt) S.showRomaji ? prt.classList.add('on') : prt.classList.remove('on');
+  if(pht) S.showHira   ? pht.classList.add('on') : pht.classList.remove('on');
 
 }
 
@@ -4143,22 +4141,23 @@ function toggleSound() {
   pushMyProgress();
 }
 
-function setPronToggle(mode) {
-  // 이미 켜진 모드를 다시 누르면 OFF, 아니면 해당 모드로 ON
-  if(S.showPron && S.pronMode === mode) {
-    S.showPron = false;
-  } else {
-    S.showPron = true;
-    S.pronMode = mode;
-  }
+function toggleRomaji() {
+  S.showRomaji = !S.showRomaji;
   renderSettings();
   persistProgress();
   pushMyProgress();
 }
-
-// 하위 호환: 이전 코드에서 직접 호출될 경우를 대비
-function toggleShowPron() { setPronToggle(S.pronMode || 'roman'); }
-function setPronMode(mode) { setPronToggle(mode); }
+function toggleHira() {
+  S.showHira = !S.showHira;
+  renderSettings();
+  persistProgress();
+  pushMyProgress();
+}
+// 하위 호환
+function setPronToggle(mode) {
+  if(mode === 'roman') toggleRomaji();
+  else if(mode === 'hira') toggleHira();
+}
 
 /* ═══════════════════════════════════════════
    NOTIFICATIONS
@@ -4846,7 +4845,7 @@ function buildProgressSnapshot() {
     allCompleted:[...S.allCompleted],
     notifEnabled:S.notifEnabled, notifTime:S.notifTime,
     darkMode:S.darkMode, sound:S.sound, qCount:S.qCount,
-    showPron:S.showPron, pronMode:S.pronMode,
+    showRomaji:S.showRomaji, showHira:S.showHira,
     enabledCats:[...S.enabledCats],
     lessonStars: S.lessonStars,
     titles: [...S.titles],
@@ -4883,11 +4882,13 @@ function applyProgressSnapshot(snap) {
   S.darkMode = snap.darkMode ?? false;
   S.sound = snap.sound ?? true;
   S.qCount = snap.qCount ?? 5;
-  // showPron: 명시적으로 false인 경우만 false, undefined는 현재 값 유지 (구버전 스냅샷 보호)
-  if(snap.showPron === true)  S.showPron = true;
-  if(snap.showPron === false) S.showPron = false;
-  // snap에 showPron이 없으면(구버전) S.showPron은 기존 값(초기화 시 false) 그대로
-  S.pronMode = snap.pronMode ?? 'roman';
+  if(snap.showRomaji !== undefined) S.showRomaji = snap.showRomaji;
+  else if(snap.showPron !== undefined && snap.pronMode !== undefined) {
+    // 구버전 데이터 마이그레이션: showPron+pronMode → showRomaji/showHira
+    S.showRomaji = snap.showPron && snap.pronMode === 'roman';
+    S.showHira   = snap.showPron && snap.pronMode === 'hira';
+  }
+  if(snap.showHira !== undefined) S.showHira = snap.showHira;
   S.enabledCats = new Set(snap.enabledCats ?? []);
   S.lessonStars = snap.lessonStars ?? {};
   S.titles = new Set(snap.titles ?? []);
@@ -4993,8 +4994,8 @@ function loginAs(uid, name) {
       sound:       saved.sound,
       notifEnabled:saved.notifEnabled,
       notifTime:   saved.notifTime,
-      showPron:    saved.showPron,
-      pronMode:    saved.pronMode,
+      showRomaji:  saved.showRomaji ?? (saved.showPron && saved.pronMode === 'roman'),
+      showHira:    saved.showHira   ?? (saved.showPron && saved.pronMode === 'hira'),
       qCount:      saved.qCount,
       dailyGoal:   saved.dailyGoal,
     } : null;
@@ -5007,8 +5008,8 @@ function loginAs(uid, name) {
       if(_savedSettings.sound       !== undefined) S.sound       = _savedSettings.sound;
       if(_savedSettings.notifEnabled!== undefined) S.notifEnabled= _savedSettings.notifEnabled;
       if(_savedSettings.notifTime   !== undefined) S.notifTime   = _savedSettings.notifTime;
-      if(_savedSettings.showPron    !== undefined) S.showPron    = _savedSettings.showPron;
-      if(_savedSettings.pronMode    !== undefined) S.pronMode    = _savedSettings.pronMode;
+      if(_savedSettings.showRomaji  !== undefined) S.showRomaji  = _savedSettings.showRomaji;
+      if(_savedSettings.showHira    !== undefined) S.showHira    = _savedSettings.showHira;
       if(_savedSettings.qCount      !== undefined) S.qCount      = _savedSettings.qCount;
       if(_savedSettings.dailyGoal   !== undefined) S.dailyGoal   = _savedSettings.dailyGoal;
       document.documentElement.setAttribute('data-theme', S.darkMode ? 'dark' : 'light');
@@ -5052,7 +5053,7 @@ function loginAs(uid, name) {
     S.gems=0; S.streakShield=false; S.couponRevealed=false;
     S.notifEnabled=true; S.notifTime='09:00';
     S.darkMode=false; S.sound=true; S.qCount=5;
-    S.showPron=false; S.pronMode='roman';
+    S.showRomaji=false; S.showHira=false;
     S.enabledCats=new Set(['greet','intro','faith','mission','lords','creed','gospel','praise']);
     S.lastHeartRefillDate = new Date().toDateString(); // 초기화 시 오늘 날짜 기록
   }
@@ -5118,7 +5119,7 @@ function doLogout() {
   S.gems=0; S.streakShield=false; S.couponRevealed=false;
   S.lastHeartRefillDate=''; S.maxHearts=5;
   S.notifEnabled=true; S.notifTime='09:00'; S.sound=true; S.darkMode=false; S.qCount=5;
-  S.showPron=false; S.pronMode='roman';
+  S.showRomaji=false; S.showHira=false;
   S.enabledCats=new Set();
   document.documentElement.setAttribute('data-theme','light'); // 다크모드 시각 상태도 반드시 초기화
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -5321,8 +5322,8 @@ function pushMyProgress() {
     sound:              S.sound,
     darkMode:           S.darkMode,
     qCount:             S.qCount,
-    showPron:           S.showPron,
-    pronMode:           S.pronMode,
+    showRomaji: S.showRomaji,
+    showHira:   S.showHira,
     dailyGoal:          S.dailyGoal,
     heartsSentToday:      S.heartsSentToday,
     heartRequestedToday:  S.heartRequestedToday || '',
@@ -5390,10 +5391,13 @@ function restoreFromFirebase() {
       }
       if(data.qCount          !== undefined) S.qCount          = data.qCount;
       if(data.dailyGoal       !== undefined) S.dailyGoal       = data.dailyGoal;
-      // showPron: Firebase에 있으면 복원, 없으면(구버전 데이터) 기존 값 유지 — false로 강제하지 않음
-      if(data.showPron === true)  S.showPron = true;
-      if(data.showPron === false) S.showPron = false;
-      if(data.pronMode !== undefined) S.pronMode = data.pronMode;
+      if(data.showRomaji !== undefined) S.showRomaji = data.showRomaji;
+      else if(data.showPron !== undefined && data.pronMode !== undefined) {
+        // 구버전 Firebase 마이그레이션
+        S.showRomaji = data.showPron && data.pronMode === 'roman';
+        S.showHira   = data.showPron && data.pronMode === 'hira';
+      }
+      if(data.showHira !== undefined) S.showHira = data.showHira;
       // heartsSentToday: 오늘 날짜와 일치할 때만 복원 (날짜 지난 건 무시)
       if(data.heartsSentToday && data.heartsSentToday.date === new Date().toDateString()) {
         S.heartsSentToday = data.heartsSentToday;
