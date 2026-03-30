@@ -31,6 +31,9 @@
 [data-theme="dark"]{
   --bg:#131F24;--bg2:#1A2C35;--bg3:#223040;
   --text:#EFEFEF;--text2:#7A8B96;--border:#2A3D4A;
+  --green-lt:#0d2e00;--red-lt:#2e0d0d;--blue-lt:#0d2030;
+  --gold-lt:#2a2600;--purple-lt:#1e0d2e;--orange-lt:#2e1a00;
+  --pink-lt:#2e0d1a;--teal-lt:#00201f;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;overflow:hidden;}
@@ -177,6 +180,8 @@ body{
 .journey-chest.opened{
   border:2px solid #58CC02;background:#F0FFF0;cursor:default;
 }
+[data-theme="dark"] .journey-chest.ready{background:#2a2400;}
+[data-theme="dark"] .journey-chest.opened{background:#0d2210;}
 .journey-chest.locked{opacity:.5;}
 @keyframes chestPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,217,0,.4)}50%{box-shadow:0 0 0 8px rgba(255,217,0,0)}}
 .chest-icon{display:flex;align-items:center;justify-content:center;}
@@ -190,6 +195,7 @@ body{
 .path-gem-chest{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 20px;border-radius:14px;cursor:pointer;transition:transform .15s;border:2px dashed #E0E0E0;}
 .path-gem-chest:active{transform:scale(.95);}
 .path-gem-chest.ready{border:2px solid #1CB0F6;background:#E8F7FF;animation:gemChestPulse 2s ease infinite;}
+[data-theme="dark"] .path-gem-chest.ready{background:#0a1e2e;}
 .path-gem-chest.opened{border:2px solid #BDBDBD;background:var(--bg2);cursor:default;opacity:.6;}
 .path-gem-chest.locked{opacity:.4;cursor:pointer;}
 .path-gem-icon{font-size:28px;line-height:1;}
@@ -283,6 +289,7 @@ body{
   border-radius:8px;font-size:11px;font-weight:700;
   background:#E8F5E9;color:#2E7D32;
 }
+[data-theme="dark"] .shop-item-badge{background:#0d2210;color:#4ade80;}
 .shop-buy-btn{
   flex-shrink:0;display:flex;align-items:center;gap:4px;
   background:var(--green);color:#fff;border:none;
@@ -300,12 +307,13 @@ body{
   align-items:center;justify-content:center;flex-direction:column;
 }
 .title-modal-box{
-  background:#fff;border-radius:24px;padding:32px 40px;
+  background:var(--bg2);border-radius:24px;padding:32px 40px;
   text-align:center;max-width:320px;width:90%;
   box-shadow:0 8px 32px rgba(0,0,0,.25);
 }
 .title-modal-emoji{font-size:56px;margin-bottom:12px;}
 .title-modal-header{font-size:13px;color:var(--text2);font-weight:700;margin-bottom:8px;letter-spacing:.05em;}
+[data-theme="dark"] .title-modal-header{color:var(--text);}
 .title-modal-title-text{font-size:24px;font-weight:800;color:var(--text);margin-bottom:20px;}
 .title-modal-btn{
   background:var(--green);color:#fff;border:none;
@@ -424,6 +432,7 @@ body{
   display:flex;flex-direction:column;
   padding:24px 20px 20px;gap:20px;
 }
+.quiz-body>*{flex-shrink:0;}
 .quiz-prompt{font-size:13px;font-weight:600;color:var(--text2);}
 .quiz-question{font-size:22px;font-weight:800;line-height:1.4;}
 .quiz-jp{font-size:17px;color:var(--text2);margin-top:4px;}
@@ -432,8 +441,17 @@ body{
   border:2px solid var(--border);border-radius:var(--r-sm);
   padding:14px 16px;font-size:15px;font-weight:600;
   background:var(--bg);color:var(--text);cursor:pointer;
-  text-align:left;transition:all .15s;
+  text-align:left;transition:border-color .15s,background .15s,color .15s;
   display:flex;align-items:center;gap:10px;
+  -webkit-appearance:none;appearance:none;
+  touch-action:manipulation;
+  /* hover 잔류 방지: 터치 장치에서 hover 상태가 고착되지 않도록 */
+  -webkit-tap-highlight-color:transparent;
+  outline:none;
+}
+/* hover는 실제 포인터(마우스) 장치에서만 적용 */
+@media (hover:hover) and (pointer:fine){
+  .choice-btn:not(.disabled):hover{border-color:var(--blue);background:var(--blue-lt);}
 }
 @media(hover:hover){.choice-btn:not(.disabled):hover{border-color:var(--blue);background:var(--blue-lt);}}
 @media(hover:hover){[data-theme="dark"] .choice-btn:not(.disabled):hover{background:#0d2a3a;color:#7dd8fd;}}
@@ -505,13 +523,18 @@ body{
 .qtb-rev{background:#f3e8ff;color:#7c3aed;}
 .qtb-arr{background:#fff3e0;color:#e65c00;}
 .qtb-fill{background:#e8faf0;color:#16a34a;}
+[data-theme="dark"] .qtb-mcq{background:#0a1e2e;color:#1CB0F6;}
+[data-theme="dark"] .qtb-rev{background:#1a0d2e;color:#CE82FF;}
+[data-theme="dark"] .qtb-arr{background:#1e1000;color:#FF9600;}
+[data-theme="dark"] .qtb-fill{background:#0d2210;color:#58CC02;}
 
 /* ── ARRANGE TYPE ────────────────────────────── */
-.arr-answer-bar{min-height:54px;border:2.5px dashed var(--border);border-radius:var(--r-sm);padding:8px 12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:var(--bg);margin:8px 0 4px;transition:border-color .2s;}
+.arr-answer-bar{min-height:54px;border:2.5px dashed var(--border);border-radius:var(--r-sm);padding:8px 12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;align-content:flex-start;background:var(--bg);margin:8px 0 4px;transition:border-color .2s;flex-shrink:0;}
 .arr-answer-bar.has-tiles{border-color:var(--blue);}
 .arr-placeholder{font-size:13px;color:var(--text2);font-weight:500;}
-.arr-tiles{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
-.tile-btn{padding:10px 15px;border:2.5px solid var(--blue);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:16px;font-weight:700;cursor:pointer;transition:all .12s;-webkit-tap-highlight-color:transparent;}
+.arr-tiles{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;flex-shrink:0;}
+.tile-btn{padding:10px 15px;border:2.5px solid var(--blue);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:16px;font-weight:700;cursor:pointer;transition:all .12s;-webkit-tap-highlight-color:transparent;display:inline-flex;flex-direction:column;align-items:center;gap:2px;}
+.tile-romaji{font-size:10px;font-weight:500;color:var(--text2);letter-spacing:.03em;}
 .tile-btn:active{transform:scale(.93);}
 .tile-btn.used{opacity:.25;pointer-events:none;}
 .placed-tile{padding:9px 14px;border:2.5px solid var(--blue);border-radius:var(--r-sm);background:var(--blue-lt);color:var(--text);font-size:16px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;}
@@ -520,14 +543,17 @@ body{
 
 /* ── REVERSE TYPE ─────────────────────────────── */
 .rev-jp-card{background:linear-gradient(135deg,#eef6ff,#dbeafe);border:2.5px solid #1CB0F6;border-radius:var(--r);padding:22px 20px;text-align:center;margin:8px 0;}
+[data-theme="dark"] .rev-jp-card{background:linear-gradient(135deg,#0a1e2e,#0d2a3d);}
 .rev-jp-text{font-size:28px;font-weight:800;color:var(--text);line-height:1.3;}
 .rev-jp-reading{font-size:14px;color:var(--text2);margin-top:6px;font-weight:600;}
 
 /* ── FILL TYPE ────────────────────────────────── */
 .fill-card{background:linear-gradient(135deg,#fffbeb,#fef3c7);border:2.5px solid #FFD900;border-radius:var(--r);padding:20px;text-align:center;margin:8px 0;}
+[data-theme="dark"] .fill-card{background:linear-gradient(135deg,#1e1a00,#2a2400);}
 .fill-card-label{font-size:11px;font-weight:700;color:#92400e;letter-spacing:.05em;margin-bottom:6px;}
 .fill-card-text{font-size:26px;font-weight:800;color:var(--text);}
 .fill-card-hint{font-size:14px;color:#92400e;margin-top:8px;font-weight:600;}
+[data-theme="dark"] .fill-card-label,[data-theme="dark"] .fill-card-hint,[data-theme="dark"] .fill-card .speak-hint{color:#f59e0b;}
 .fill-card-meaning{font-size:13px;color:var(--text2);margin-top:3px;}
 
 /* ── REVIEW CARD (Home) ───────────────────────── */
@@ -548,11 +574,14 @@ body{
 .nlc-arrow{font-size:22px;flex-shrink:0;opacity:.5;}
 
 .review-card{background:linear-gradient(135deg,#fff3e0,#ffe0b2);border:2px solid #FF9600;border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:12px;transition:all .15s;-webkit-tap-highlight-color:transparent;}
+[data-theme="dark"] .review-card{background:linear-gradient(135deg,#1e1000,#2a1800);}
 .review-card:active{transform:scale(.98);}
 .rc-icon{font-size:30px;}
 .rc-title{font-size:15px;font-weight:800;color:#c45200;}
 .rc-sub{font-size:12px;color:#a04000;margin-top:2px;}
 .rc-arrow{margin-left:auto;font-size:20px;color:#c45200;font-weight:700;}
+[data-theme="dark"] .rc-title,[data-theme="dark"] .rc-arrow{color:#FF9600;}
+[data-theme="dark"] .rc-sub{color:#cc7a00;}
 
 /* ── RESULT ──────────────────────────────────── */
 .result-body{
@@ -634,6 +663,10 @@ body{
   width:48px;height:28px;border-radius:99px;cursor:pointer;
   position:relative;transition:background .2s;flex-shrink:0;
   border:none;background:var(--bg3);
+  -webkit-appearance:none;appearance:none;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+  outline:none;
 }
 .toggle.on{background:var(--green);}
 .toggle::after{
@@ -819,6 +852,9 @@ body{
 .top3-xp.gold{color:#D4A000;}
 .top3-xp.silver{color:#78909C;}
 .top3-xp.bronze{color:#FF7043;}
+[data-theme="dark"] .top3-xp.gold{color:#FFD900;}
+[data-theme="dark"] .top3-xp.silver{color:#B0BEC5;}
+[data-theme="dark"] .top3-xp.bronze{color:#FFAB76;}
 
 /* 전체 랭킹 리스트 */
 .rank-section{padding:14px 16px 0;}
@@ -844,6 +880,9 @@ body{
 .rank-num.top1{color:#D4A000;}
 .rank-num.top2{color:#78909C;}
 .rank-num.top3{color:#FF7043;}
+[data-theme="dark"] .rank-num.top1{color:#FFD900;}
+[data-theme="dark"] .rank-num.top2{color:#B0BEC5;}
+[data-theme="dark"] .rank-num.top3{color:#FFAB76;}
 .rank-avatar{
   width:36px;height:36px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
@@ -1196,30 +1235,46 @@ body{
 [data-theme="dark"] .reading-text{color:#7dd8fd;}
 .quiz-jp{font-size:16px;color:var(--text2);margin-top:4px;font-weight:600;}
 
-/* ── FURIGANA (pronunciation above JP text) ──── */
-.quiz-jp-wrap{display:flex;flex-direction:column;align-items:flex-start;gap:1px;}
 /* ── WORD TAP ──────────────────────────────────── */
+.quiz-jp-wrap{display:flex;flex-direction:column;align-items:flex-start;gap:1px;}
+/* Duolingo 스타일: JP 텍스트를 flex column으로 감싸는 블록 */
+.jp-word-block{display:flex;flex-direction:column;align-items:flex-start;gap:5px;}
 .jp-word-row{display:flex;flex-wrap:wrap;gap:2px;align-items:flex-end;}
-.jp-word{display:inline-flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;
+.jp-word{display:inline-flex;align-items:center;cursor:pointer;
   padding:2px 3px;border-radius:6px;transition:background .12s;}
 .jp-word:active{background:var(--blue-lt);}
 .jp-word.tapped{background:var(--blue-lt);}
-.jp-word-furi{font-size:9px;color:var(--blue);font-weight:600;line-height:1;white-space:nowrap;min-height:10px;}
-[data-theme="dark"] .jp-word-furi{color:#7dd8fd;}
 .jp-word-text{font-size:20px;font-weight:800;color:var(--text);line-height:1.2;
   border-bottom:1.5px dashed var(--border);}
 .jp-word:active .jp-word-text,.jp-word.tapped .jp-word-text{border-color:var(--blue);}
 
+/* Duolingo 스타일 로마자 한 줄 (JP 아래) */
+.jp-romaji-line{
+  font-size:13px;font-weight:500;color:var(--blue);
+  letter-spacing:.04em;word-spacing:4px;line-height:1.4;
+}
+[data-theme="dark"] .jp-romaji-line{color:#7dd8fd;}
+
+/* 보기 버튼: JP 텍스트 + 로마자 서브라인 */
+.choice-content{display:flex;flex-direction:column;gap:3px;flex:1;}
+.choice-jp{font-size:15px;font-weight:600;line-height:1.3;}
+.choice-sub{font-size:11px;font-weight:500;color:var(--blue);letter-spacing:.04em;}
+[data-theme="dark"] .choice-sub{color:#7dd8fd;}
+
 /* Rev card word tap */
-.rev-jp-word-row{display:flex;flex-wrap:wrap;gap:3px;align-items:flex-end;justify-content:center;margin-bottom:4px;}
-.rev-jp-word{display:inline-flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;
+.rev-jp-word-block{display:flex;flex-direction:column;align-items:center;gap:5px;}
+.rev-jp-word-row{display:flex;flex-wrap:wrap;gap:3px;align-items:flex-end;justify-content:center;}
+.rev-jp-word{display:inline-flex;align-items:center;cursor:pointer;
   padding:4px 4px 2px;border-radius:8px;transition:background .12s;}
 .rev-jp-word:active,.rev-jp-word.tapped{background:rgba(28,176,246,.12);}
-.rev-jp-word-furi{font-size:10px;color:var(--blue);font-weight:600;line-height:1;min-height:11px;white-space:nowrap;}
-[data-theme="dark"] .rev-jp-word-furi{color:#7dd8fd;}
 .rev-jp-word-text{font-size:28px;font-weight:800;color:var(--text);line-height:1.2;
   border-bottom:1.5px dashed rgba(28,176,246,.4);}
 .rev-jp-word:active .rev-jp-word-text,.rev-jp-word.tapped .rev-jp-word-text{border-color:var(--blue);}
+.rev-jp-romaji-line{
+  font-size:15px;font-weight:500;color:var(--blue);
+  letter-spacing:.05em;word-spacing:5px;line-height:1.4;text-align:center;
+}
+[data-theme="dark"] .rev-jp-romaji-line{color:#7dd8fd;}
 
 /* Word meaning popup */
 #word-popup{
@@ -1236,10 +1291,9 @@ body{
 [data-theme="dark"] .wp-reading{color:#7dd8fd;}
 .wp-meaning{font-size:13px;font-weight:700;color:var(--text2);}
 .wp-no-meaning{font-size:12px;color:var(--text2);font-style:italic;}
-.quiz-jp-furigana{font-size:10px;color:var(--blue);font-weight:600;letter-spacing:.03em;line-height:1.2;white-space:pre-wrap;}
-[data-theme="dark"] .quiz-jp-furigana{color:#7dd8fd;}
-.rev-jp-furigana{font-size:12px;color:var(--blue);font-weight:600;letter-spacing:.03em;margin-bottom:4px;}
-[data-theme="dark"] .rev-jp-furigana{color:#7dd8fd;}
+/* 피드백 정답 로마자 서브라인 */
+.fb-ans-romaji{font-size:12px;font-weight:500;color:var(--blue);letter-spacing:.04em;margin-top:2px;}
+[data-theme="dark"] .fb-ans-romaji{color:#7dd8fd;}
 
 /* ── PRON MODE PICKER (settings) ──────────────── */
 .pron-mode-row{display:flex;gap:8px;margin-top:10px;}
@@ -1660,7 +1714,6 @@ body{
         <button class="auth-btn" onclick="doLogin()">로그인</button>
       </div>
     </div>
-    <button class="auth-guest-btn" onclick="openKanaMaster()">📖 문자 마스터 — 로그인 없이 시작</button>
   </div>
 </div>
 
@@ -1989,9 +2042,10 @@ body{
       </div>
     </div>
 
-    <!-- Widget / Display Section -->
+    <!-- Learning Settings -->
     <div class="settings-section">
       <div class="ss-header">🎯 학습 설정</div>
+      <div class="chip-group" id="cat-chips" style="display:none;"></div>
       <div class="setting-row">
         <div class="sr-left">
           <div class="sr-label">하루 목표 XP</div>
@@ -2017,7 +2071,6 @@ body{
       </div>
     </div>
 
-
     <!-- Display Section -->
     <div class="settings-section">
       <div class="ss-header">🎨 화면 설정</div>
@@ -2040,26 +2093,19 @@ body{
     <!-- Pronunciation Section -->
     <div class="settings-section">
       <div class="ss-header">🈳 발음 표시</div>
-      <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:12px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div class="sr-left">
-            <div class="sr-label">한자 위 발음 표시</div>
-            <div class="sr-sub">퀴즈에서 한자 위에 읽는 법을 보여줘요</div>
-          </div>
-          <button class="toggle" id="pron-toggle" onclick="toggleShowPron()"></button>
+      <div class="setting-row">
+        <div class="sr-left">
+          <div class="sr-label">로마자 발음 표시</div>
+          <div class="sr-sub" style="font-size:12px;letter-spacing:.04em;">ni · hon · go</div>
         </div>
-        <div id="pron-mode-wrap" style="display:none;">
-          <div class="pron-mode-row">
-            <button class="pron-mode-btn active" id="pron-roman-btn" onclick="setPronMode('roman')">
-              <span class="pmd-jp" style="font-size:13px;letter-spacing:.05em;">ni hon go</span>
-              <span class="pmd-sub">로마자 (Romanized)</span>
-            </button>
-            <button class="pron-mode-btn" id="pron-hira-btn" onclick="setPronMode('hira')">
-              <span class="pmd-jp">にほんご</span>
-              <span class="pmd-sub">히라가나 (Japanese)</span>
-            </button>
-          </div>
+        <button class="toggle" id="pron-roman-toggle" onclick="toggleRomaji()"></button>
+      </div>
+      <div class="setting-row">
+        <div class="sr-left">
+          <div class="sr-label">히라가나 발음 표시</div>
+          <div class="sr-sub">にほんご</div>
         </div>
+        <button class="toggle" id="pron-hira-toggle" onclick="toggleHira()"></button>
       </div>
     </div>
 
@@ -2264,7 +2310,7 @@ body{
 <!-- ══════════════════ KANA MASTER SCREEN ══════════════════ -->
 <div class="screen" id="screen-kana" style="overflow-y:auto;">
   <div class="kana-header">
-    <button class="kana-back-btn" onclick="closeKanaMaster()">←</button>
+    <button class="kana-back-btn" id="kana-back-btn" onclick="closeKanaMaster()">←</button>
     <span class="kana-title">📖 문자 마스터</span>
   </div>
   <div class="kana-cat-tabs">
@@ -2292,6 +2338,9 @@ body{
   <button class="nav-btn" id="nav-settings" onclick="goTo('settings')">
     <span class="nav-icon">⚙️</span>설정
   </button>
+  <button class="nav-btn" id="nav-kana" onclick="openKanaMaster()">
+    <span class="nav-icon">📖</span>문자
+  </button>
 </div>
 
 <script>
@@ -2316,6 +2365,7 @@ const S = {
   notifEnabled:true, notifTime:'09:00',
   darkMode:false, sound:true,
   qCount:5,
+  showRomaji:true, showHira:false,
   enabledCats:new Set(),
   lessonStars: {},  // lessonId → 0,1,2,3
   titles: new Set(),        // earned title strings
@@ -2350,13 +2400,14 @@ function goTo(name) {
   if(nb) nb.classList.add('active');
   // Hide bottom nav on auth screen
   const nav = document.querySelector('.bottom-nav');
-  if(nav) nav.style.display = name === 'auth' ? 'none' : 'flex';
+  const hideNav = name === 'auth' || (name === 'kana' && !(CU && CU.uid));
+  if(nav) nav.style.display = hideNav ? 'none' : 'flex';
   syncNavPadding();
-  if(nav) nav.style.display = (name === 'auth' || name === 'kana') ? 'none' : 'flex';
   if(name==='home') { renderHome(); updateTopbarUser(); }
   if(name==='stats') renderStats();
   if(name==='settings') renderSettings();
   if(name==='team') renderTeam();
+  if(name==='kana') renderKanaTable();
 }
 
 /* ═══════════════════════════════════════════
@@ -2404,11 +2455,13 @@ let _kanaPrevScreen = 'auth';
 let _kanaQuiz = null;
 
 function openKanaMaster() {
-  _kanaPrevScreen = CU && CU.uid ? 'home' : 'auth';
+  _kanaPrevScreen = 'home';
   _kanaCategory = 'hiragana';
   _kanaMode = 'table';
+  // 로그인 상태에서만 접근 가능 — 뒤로가기 버튼 숨김 (하단 내비로 이동)
+  const backBtn = document.getElementById('kana-back-btn');
+  if (backBtn) backBtn.style.display = 'none';
   goTo('kana');
-  renderKanaTable();
 }
 
 function closeKanaMaster() { goTo(_kanaPrevScreen); }
@@ -3293,8 +3346,8 @@ function dedupChoices(q) {
 }
 
 function getPronText(q) {
-  if (!S.showPron) return '';
-  return S.pronMode === 'hira' ? (q.hira || '') : (q.romaji || '');
+  if (!S.showRomaji && !S.showHira) return '';
+  return S.showRomaji ? (q.romaji || '') : (q.hira || '');
 }
 
 /* ── WORD TAP ──────────────────────────────────── */
@@ -3337,33 +3390,235 @@ function hideWordPopup() {
   document.querySelectorAll('.jp-word.tapped,.rev-jp-word.tapped').forEach(el => el.classList.remove('tapped'));
 }
 
-function buildJpWordSpans(jp, showPron, pronMode, wordCls, furiCls, textCls, rowCls) {
-  const tokens = (typeof WORD_DATA !== 'undefined' && WORD_DATA[jp]) ? WORD_DATA[jp] : null;
-  if (!tokens) {
-    // Fallback: whole text as one clickable span
-    const furi = showPron ? (pronMode === 'hira' ? '' : '') : '';
-    return `<div class="${rowCls}">
-      <div class="${wordCls}" onclick="showWordPopup(this,'${jp.replace(/'/g,"\\'")}','','')">
-        <span class="${furiCls}"></span>
-        <span class="${textCls}">${jp}</span>
-      </div>
-    </div>`;
+// 히라가나·카타카나 → 로마자 변환 (Hepburn 표기법)
+function hiraganaToRomaji(str) {
+  // 조사 は→wa, へ→e (단독 토큰일 때만)
+  if (str === 'は') return 'wa';
+  if (str === 'へ') return 'e';
+  // カタカナ → ひらがな 정규화 (ァ-ヶ → ぁ-ゖ)
+  str = str.replace(/[\u30A1-\u30F6]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
+  // ッ(카타카나 촉음) → っ, ー는 유지
+  str = str.replace(/\u30C3/g, 'っ');
+  // 2글자 조합 (きゃ 등) 먼저 처리
+  const combo = {
+    'きゃ':'kya','きゅ':'kyu','きょ':'kyo',
+    'しゃ':'sha','しゅ':'shu','しょ':'sho',
+    'ちゃ':'cha','ちゅ':'chu','ちょ':'cho',
+    'にゃ':'nya','にゅ':'nyu','にょ':'nyo',
+    'ひゃ':'hya','ひゅ':'hyu','ひょ':'hyo',
+    'みゃ':'mya','みゅ':'myu','みょ':'myo',
+    'りゃ':'rya','りゅ':'ryu','りょ':'ryo',
+    'ぎゃ':'gya','ぎゅ':'gyu','ぎょ':'gyo',
+    'じゃ':'ja', 'じゅ':'ju', 'じょ':'jo',
+    'ぢゃ':'ja', 'ぢゅ':'ju', 'ぢょ':'jo',
+    'びゃ':'bya','びゅ':'byu','びょ':'byo',
+    'ぴゃ':'pya','ぴゅ':'pyu','ぴょ':'pyo',
+  };
+  const single = {
+    'あ':'a','い':'i','う':'u','え':'e','お':'o',
+    'か':'ka','き':'ki','く':'ku','け':'ke','こ':'ko',
+    'さ':'sa','し':'shi','す':'su','せ':'se','そ':'so',
+    'た':'ta','ち':'chi','つ':'tsu','て':'te','と':'to',
+    'な':'na','に':'ni','ぬ':'nu','ね':'ne','の':'no',
+    'は':'ha','ひ':'hi','ふ':'fu','へ':'he','ほ':'ho',
+    'ま':'ma','み':'mi','む':'mu','め':'me','も':'mo',
+    'や':'ya','ゆ':'yu','よ':'yo',
+    'ら':'ra','り':'ri','る':'ru','れ':'re','ろ':'ro',
+    'わ':'wa','ゐ':'i','ゑ':'e','を':'o','ん':'n',
+    'が':'ga','ぎ':'gi','ぐ':'gu','げ':'ge','ご':'go',
+    'ざ':'za','じ':'ji','ず':'zu','ぜ':'ze','ぞ':'zo',
+    'だ':'da','ぢ':'ji','づ':'zu','で':'de','ど':'do',
+    'ば':'ba','び':'bi','ぶ':'bu','べ':'be','ぼ':'bo',
+    'ぱ':'pa','ぴ':'pi','ぷ':'pu','ぺ':'pe','ぽ':'po',
+    'ぁ':'a','ぃ':'i','ぅ':'u','ぇ':'e','ぉ':'o',
+    'ゃ':'ya','ゅ':'yu','ょ':'yo','っ':'','ー':'-','〜':'~',
+  };
+  let result = '';
+  let i = 0;
+  while (i < str.length) {
+    if (str[i] === 'っ') {
+      // 촉음: 다음 자음 앞에 같은 자음 추가
+      const nextTwo = str[i+1] + (str[i+2] || '');
+      const nextOne = str[i+1] || '';
+      const nxt = combo[nextTwo] || single[nextOne] || '';
+      result += nxt ? nxt[0] : '';
+      i++;
+      continue;
+    }
+    if (str[i] === 'ん') {
+      // 모음/y 앞의 ん은 n'으로
+      const next = str[i+1] || '';
+      const isVowel = 'あいうえおアイウエオaeiou'.includes(next);
+      result += isVowel ? "n'" : 'n';
+      i++;
+      continue;
+    }
+    const two = str[i] + (str[i+1] || '');
+    if (combo[two]) { result += combo[two]; i += 2; continue; }
+    if (single[str[i]]) { result += single[str[i]]; i++; continue; }
+    // 한자·기타는 그대로
+    result += str[i]; i++;
   }
-  const spans = tokens.map(t => {
-    const surface = t[0];
-    const reading = t[1] || surface;
-    const meaning = t[2] || '';
-    const furiText = showPron
-      ? (pronMode === 'hira' ? reading : '') : '';
-    const surfSafe = surface.replace(/'/g,"\\'").replace(/"/g,'&quot;');
-    const readSafe = reading.replace(/'/g,"\\'");
-    const meanSafe = meaning.replace(/'/g,"\\'");
-    return `<div class="${wordCls}" onclick="showWordPopup(this,'${surfSafe}','${readSafe}','${meanSafe}')">
-      <span class="${furiCls}">${furiText}</span>
-      <span class="${textCls}">${surface}</span>
-    </div>`;
-  }).join('');
-  return `<div class="${rowCls}">${spans}</div>`;
+  return result;
+}
+
+// 타일(개별 토큰) → 읽기 변환: 전체 WORD_DATA에서 표면형→읽기 글로벌 맵 사용
+let _surfaceReadMap = null;
+function _buildSurfaceMap() {
+  if (_surfaceReadMap) return _surfaceReadMap;
+  _surfaceReadMap = {};
+  if (typeof WORD_DATA === 'undefined') return _surfaceReadMap;
+  for (const key in WORD_DATA) {
+    const tokens = WORD_DATA[key];
+    // 개별 토큰 등록
+    tokens.forEach(tk => {
+      if (tk[0] && tk[1] && tk[0] !== tk[1]) _surfaceReadMap[tk[0]] = tk[1];
+    });
+    // 연속 토큰 결합도 등록 (tokenizeJp가 여러 형태소를 하나로 묶을 수 있음)
+    for (let start = 0; start < tokens.length; start++) {
+      let surface = '', reading = '';
+      for (let end = start; end < tokens.length; end++) {
+        surface += tokens[end][0];
+        reading += tokens[end][1] || tokens[end][0];
+        if (end > start && surface !== reading) _surfaceReadMap[surface] = reading;
+      }
+    }
+  }
+  return _surfaceReadMap;
+}
+// 전체 WORD_DATA의 토큰 배열 캐시 (순차 매칭용)
+let _allTokenArrays = null;
+function _getAllTokenArrays() {
+  if (_allTokenArrays) return _allTokenArrays;
+  _allTokenArrays = [];
+  if (typeof WORD_DATA === 'undefined') return _allTokenArrays;
+  for (const key in WORD_DATA) _allTokenArrays.push(WORD_DATA[key]);
+  return _allTokenArrays;
+}
+function _tileToReading(tile, useRomaji) {
+  const map = _buildSurfaceMap();
+  if (map[tile]) {
+    return useRomaji ? hiraganaToRomaji(map[tile]) : map[tile];
+  }
+  // 순차 매칭: 타일 텍스트를 WORD_DATA 토큰으로 소비하며 읽기 조합
+  const arrays = _getAllTokenArrays();
+  for (const tokens of arrays) {
+    let remaining = tile, reading = '', matched = false;
+    for (const tk of tokens) {
+      if (!remaining) break;
+      if (remaining.startsWith(tk[0])) {
+        reading += tk[1] || tk[0];
+        remaining = remaining.slice(tk[0].length);
+        matched = true;
+      } else if (matched) {
+        if (tk[0].startsWith(remaining) || remaining.startsWith(tk[0].slice(0, remaining.length))) {
+          const ratio = remaining.length / tk[0].length;
+          const partialReading = (tk[1] || tk[0]).slice(0, Math.ceil((tk[1] || tk[0]).length * ratio));
+          reading += partialReading;
+          remaining = '';
+        }
+        break;
+      }
+    }
+    if (!remaining && reading) {
+      return useRomaji ? hiraganaToRomaji(reading) : reading;
+    }
+  }
+  const converted = hiraganaToRomaji(tile);
+  if (/[\u4e00-\u9faf]/.test(converted)) return '';
+  return useRomaji ? converted : '';
+}
+
+// 순수 히라가나·카타카나 여부 판정
+function isPureKana(str) {
+  return /^[\u3040-\u30ff\uff65-\uff9fーァ-ヶ〜\s・]+$/.test(str);
+}
+
+/* ═══════════════════════════════════════════════════
+   Duolingo 스타일 ROMAJI 헬퍼
+   jp → romaji 매핑은 LESSONS 데이터에서 자동 빌드
+═══════════════════════════════════════════════════ */
+let _jpRomajiMap = null;
+function getJpRomajiMap() {
+  if (!_jpRomajiMap) {
+    _jpRomajiMap = {};
+    LESSONS.forEach(l => l.questions.forEach(q => {
+      if (q.jp && q.romaji) _jpRomajiMap[q.jp] = q.romaji;
+      // choices 배열의 각 항목도 미리 매핑 (lessons.js에 romaji 없는 오답 대응)
+    }));
+  }
+  return _jpRomajiMap;
+}
+
+// 일본어 텍스트 → 로마자 (Duolingo 스타일 아래 표시용)
+function getTextRomaji(text) {
+  if (!text) return '';
+  // 한국어 텍스트는 변환 불필요
+  if (/^[ㄱ-ㅎ가-힣\s·,!?.。、！？…\-→↔←（）()「」『』〔〕]+$/.test(text)) return '';
+  // 레슨 jp 필드에서 직접 조회
+  const m = getJpRomajiMap()[text];
+  if (m) return m;
+  // WORD_DATA 토큰 readings → 로마자
+  if (typeof WORD_DATA !== 'undefined' && WORD_DATA[text]) {
+    return WORD_DATA[text].map(t => hiraganaToRomaji(t[1] || t[0])).join('  ');
+  }
+  // 순수 가나 → 직접 변환
+  if (isPureKana(text)) return hiraganaToRomaji(text);
+  return '';
+}
+
+// 일본어 텍스트 → 히라가나 (히라가나 모드용)
+function getTextHira(text) {
+  if (!text) return '';
+  if (/^[ㄱ-ㅎ가-힣\s·,!?.。、！？…\-→↔←（）()「」『』〔〕]+$/.test(text)) return '';
+  if (typeof WORD_DATA !== 'undefined' && WORD_DATA[text]) {
+    return WORD_DATA[text].map(t => t[1] || t[0]).join('　');
+  }
+  if (isPureKana(text)) return text;
+  return '';
+}
+
+/* ─── 보기 버튼 HTML (Duolingo 스타일: JP 위, 로마자 아래) ─── */
+function buildChoiceHtml(text, showRomaji, showHira) {
+  // 한국어 보기는 발음 표시 불필요
+  const isKorean = /^[ㄱ-ㅎ가-힣\s·,!?.。、！？…\-→↔←（）()「」]+$/.test(text);
+  if (isKorean || (!showRomaji && !showHira)) return text;
+
+  const sub = showRomaji ? getTextRomaji(text) : getTextHira(text);
+  if (!sub) return text;
+
+  return `<span class="choice-content"><span class="choice-jp">${text}</span><span class="choice-sub">${sub}</span></span>`;
+}
+
+/* ─── 문제 JP 텍스트 + 로마자 아래 한 줄 (단어 팝업 유지) ─── */
+function buildJpWordSpans(jp, showRomaji, showHira, wordCls, furiCls, textCls, rowCls) {
+  const tokens = (typeof WORD_DATA !== 'undefined' && WORD_DATA[jp]) ? WORD_DATA[jp] : null;
+
+  let spans;
+  if (!tokens) {
+    const jpSafe = jp.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    spans = `<div class="${wordCls}" onclick="showWordPopup(this,'${jpSafe}','','')"><span class="${textCls}">${jp}</span></div>`;
+  } else {
+    spans = tokens.map(t => {
+      const surface = t[0], reading = t[1] || surface, meaning = t[2] || '';
+      const surfSafe = surface.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+      const readSafe = reading.replace(/'/g,"\\'");
+      const meanSafe = meaning.replace(/'/g,"\\'");
+      return `<div class="${wordCls}" onclick="showWordPopup(this,'${surfSafe}','${readSafe}','${meanSafe}')"><span class="${textCls}">${surface}</span></div>`;
+    }).join('');
+  }
+
+  // Duolingo 스타일: 로마자/히라가나 한 줄 아래
+  const isRevCard = rowCls === 'rev-jp-word-row';
+  const blockCls = isRevCard ? 'rev-jp-word-block' : 'jp-word-block';
+  const lineCls  = isRevCard ? 'rev-jp-romaji-line' : 'jp-romaji-line';
+  let subLine = '';
+  if (showRomaji || showHira) {
+    const sub = showRomaji ? getTextRomaji(jp) : getTextHira(jp);
+    if (sub) subLine = `<div class="${lineCls}">${sub}</div>`;
+  }
+
+  return `<div class="${blockCls}"><div class="${rowCls}">${spans}</div>${subLine}</div>`;
 }
 
 function renderMCQ(q) {
@@ -3383,15 +3638,15 @@ function renderMCQ(q) {
     <div class="quiz-question">${q.q}</div>
     ${showJp ? `<div class="quiz-jp-row">
       <div class="quiz-jp-wrap" style="flex:1;">
-        ${buildJpWordSpans(q.jp, S.showPron, S.pronMode, 'jp-word', 'jp-word-furi', 'jp-word-text', 'jp-word-row')}
+        ${buildJpWordSpans(q.jp, false, false, 'jp-word', 'jp-word-furi', 'jp-word-text', 'jp-word-row')}
       </div>
       <button class="speak-btn" id="speak-mcq" onclick="speakJapanese('${jpSafe}',this)" title="발음 듣기">🔊</button>
     </div>` : (q.jp ? `<div class="quiz-jp-row"><button class="speak-btn" id="speak-mcq" onclick="speakJapanese('${jpSafe}',this)" title="발음 듣기">🔊</button></div>` : '')}
-    ${showReading && !S.showPron ? `<div class="reading-bubble"><span class="reading-label">발음</span><span class="reading-text">${q.reading}</span></div>` : ''}
+    ${!S.showRomaji && !S.showHira && showReading ? `<div class="reading-bubble"><span class="reading-label">발음</span><span class="reading-text">${q.reading}</span></div>` : ''}
     <div class="quiz-choices" id="choices">
       ${shuffled.map((origIdx,i)=>`
         <button class="choice-btn" data-choice="${q.choices[origIdx].replace(/"/g,'&quot;')}" onclick="selectAnswer(this,'${q.choices[origIdx].replace(/'/g,"\\'")}','${correctChoice.replace(/'/g,"\\'")}')">
-          <span class="choice-key">${keys[i]}</span>${q.choices[origIdx]}
+          <span class="choice-key">${keys[i]}</span>${buildChoiceHtml(q.choices[origIdx], S.showRomaji, S.showHira)}
         </button>`).join('')}
     </div>
     <div class="quiz-feedback" id="feedback"></div>`;
@@ -3403,10 +3658,19 @@ function renderReverse(q) {
   const correct = extractKoreanMeaning(q.q) || q.q;
 
   // 오답 보기: 한국어 의미 추출에 성공한 문제만 사용 (실패 시 전체 레슨 풀에서 보충)
+  // 정답과 완전 일치 외에, 정답의 핵심 단어를 포함하는 후보도 제외 (복수 정답 방지)
+  const correctCore = correct.replace(/[()（）\s]/g, '').substring(0, 6);
   const makeCandidates = (pool) =>
     pool.filter(oq => oq.jp !== q.jp)
         .map(oq => extractKoreanMeaning(oq.q))
-        .filter(m => m && m !== correct);
+        .filter(m => {
+          if (!m || m === correct) return false;
+          // 정답 핵심 단어가 후보에 포함되거나, 후보 핵심 단어가 정답에 포함되면 제외
+          const mCore = m.replace(/[()（）\s]/g, '').substring(0, 6);
+          if (correctCore.length >= 3 && m.includes(correctCore)) return false;
+          if (mCore.length >= 3 && correct.includes(mCore)) return false;
+          return true;
+        });
 
   let candidates = makeCandidates(S.lesson.questions || []);
   if (candidates.length < 3) {
@@ -3426,8 +3690,8 @@ function renderReverse(q) {
     <div class="quiz-prompt"><span class="quiz-type-badge qtb-rev">🔄 뜻 맞추기</span>&nbsp;${S.qIndex+1} / ${total}</div>
     <div class="quiz-question" style="font-size:16px;">이 일본어의 뜻은?</div>
     <div class="rev-jp-card">
-      ${buildJpWordSpans(q.jp, S.showPron, S.pronMode, 'rev-jp-word', 'rev-jp-word-furi', 'rev-jp-word-text', 'rev-jp-word-row')}
-      ${q.reading && !S.showPron ? `<div class="rev-jp-reading">${q.reading}</div>` : ''}
+      ${buildJpWordSpans(q.jp, S.showRomaji, S.showHira, 'rev-jp-word', 'rev-jp-word-furi', 'rev-jp-word-text', 'rev-jp-word-row')}
+      ${!S.showRomaji && !S.showHira && q.reading ? `<div class="rev-jp-reading">${q.reading}</div>` : ''}
       <div class="speak-hint" onclick="speakJapanese('${jpSafe}',document.getElementById('speak-rev'))">🔊 탭하여 발음 듣기</div>
       <button class="speak-btn" id="speak-rev" style="margin:8px auto 0;display:flex;" onclick="speakJapanese('${jpSafe}',this)">🔊</button>
     </div>
@@ -3464,7 +3728,7 @@ function renderFill(q) {
     <div class="quiz-choices" id="choices">
       ${shuffled.map((origIdx,i)=>`
         <button class="choice-btn" data-choice="${q.choices[origIdx].replace(/"/g,'&quot;')}" onclick="selectAnswer(this,'${q.choices[origIdx].replace(/'/g,"\\'")}','${correctChoice.replace(/'/g,"\\'")}')">
-          <span class="choice-key">${keys[i]}</span>${q.choices[origIdx]}
+          <span class="choice-key">${keys[i]}</span>${buildChoiceHtml(q.choices[origIdx], S.showRomaji, S.showHira)}
         </button>`).join('')}
     </div>
     <div class="quiz-feedback" id="feedback"></div>`;
@@ -3495,12 +3759,20 @@ function renderArrange(q) {
     <div class="quiz-prompt"><span class="quiz-type-badge qtb-arr">🃏 단어 배열</span>&nbsp;${S.qIndex+1} / ${total}</div>
     <div class="quiz-question" style="font-size:16px;">카드를 올바른 순서로 배열하세요</div>
     <div class="arr-speak-row">
-      <div class="quiz-jp" style="font-size:14px;flex:1;">${hint}</div>
+      <div style="flex:1;">
+        <div class="quiz-jp" style="font-size:14px;">${hint}</div>
+      </div>
       <button class="speak-btn" id="speak-arr" onclick="speakJapanese('${jpSafe}',this)" title="발음 듣기">🔊</button>
     </div>
     <div class="arr-answer-bar" id="arr-answer"><span class="arr-placeholder">카드를 여기에 놓으세요</span></div>
     <div class="arr-tiles" id="arr-source">
-      ${allTiles.map((t,i)=>`<button class="tile-btn" data-idx="${i}" data-text="${t.replace(/"/g,'&quot;')}" onclick="arrangeTileTap(this)">${t}</button>`).join('')}
+      ${allTiles.map((t,i)=>{
+        let pron = '';
+        if (S.showRomaji || S.showHira) {
+          pron = _tileToReading(t, S.showRomaji);
+        }
+        return `<button class="tile-btn" data-idx="${i}" data-text="${t.replace(/"/g,'&quot;')}" onclick="arrangeTileTap(this)">${t}${pron ? `<span class="tile-romaji">${pron}</span>` : ''}</button>`;
+      }).join('')}
     </div>
     <div class="quiz-feedback" id="feedback"></div>
     <button class="arr-check-btn" id="arr-check" onclick="checkArrange('${jpSafe}')">확인하기</button>`;
@@ -3654,7 +3926,8 @@ function selectAnswer(btn, chosen, correct) {
     S.hearts = Math.max(0, S.hearts-1);
     playSound('wrong');
     feedback.className = 'quiz-feedback wrong-fb show';
-    feedback.innerHTML = `<div class="feedback-mascot"><div class="fm-svg">${terriermonSVG('sad')}</div><div class="fm-text"><div class="fm-title w">💔 틀렸어요</div><div class="fm-ans">정답: ${correct} <button class="speak-btn" style="width:26px;height:26px;font-size:13px;display:inline-flex;vertical-align:middle;margin-left:4px;" onclick="speakJapanese('${correct.replace(/'/g,"\\'")}',this)">🔊</button></div></div></div>`;
+    const correctRomaji = S.showRomaji ? getTextRomaji(correct) : (S.showHira ? getTextHira(correct) : '');
+    feedback.innerHTML = `<div class="feedback-mascot"><div class="fm-svg">${terriermonSVG('sad')}</div><div class="fm-text"><div class="fm-title w">💔 틀렸어요</div><div class="fm-ans">정답: ${correct} <button class="speak-btn" style="width:26px;height:26px;font-size:13px;display:inline-flex;vertical-align:middle;margin-left:4px;" onclick="speakJapanese('${correct.replace(/'/g,"\\'")}',this)">🔊</button>${correctRomaji ? `<div class="fb-ans-romaji">${correctRomaji}</div>` : ''}</div></div></div>`;
     continueBtn.className = 'quiz-continue-btn red';
     addWeakItem(S.lesson.id, S.questions[S.qIndex]);
     document.getElementById('quiz-hearts-display').innerHTML = (() => {
@@ -3913,7 +4186,8 @@ function renderSettings() {
     </div>
   `).join('');
 
-  // Dark toggle
+  // Dark toggle — data-theme도 S.darkMode 에 맞게 강제 동기화
+  document.documentElement.setAttribute('data-theme', S.darkMode ? 'dark' : 'light');
   const dt = document.getElementById('dark-toggle');
   if(S.darkMode) dt.classList.add('on'); else dt.classList.remove('on');
 
@@ -3939,15 +4213,11 @@ function renderSettings() {
 
   document.getElementById('notif-time').value = S.notifTime;
 
-  // Pron toggle
-  const pt = document.getElementById('pron-toggle');
-  if(pt) S.showPron ? pt.classList.add('on') : pt.classList.remove('on');
-  const pw = document.getElementById('pron-mode-wrap');
-  if(pw) pw.style.display = S.showPron ? 'block' : 'none';
-  const prb = document.getElementById('pron-roman-btn');
-  const phb = document.getElementById('pron-hira-btn');
-  if(prb) prb.classList.toggle('active', S.pronMode === 'roman');
-  if(phb) phb.classList.toggle('active', S.pronMode === 'hira');
+  // Pron toggles (로마자 / 히라가나 완전 독립)
+  const prt = document.getElementById('pron-roman-toggle');
+  const pht = document.getElementById('pron-hira-toggle');
+  if(prt) S.showRomaji ? prt.classList.add('on') : prt.classList.remove('on');
+  if(pht) S.showHira   ? pht.classList.add('on') : pht.classList.remove('on');
 
 }
 
@@ -4042,20 +4312,31 @@ function toggleSound() {
   pushMyProgress();
 }
 
-function toggleShowPron() {
-  S.showPron = !S.showPron;
-  const btn = document.getElementById('pron-toggle');
-  const wrap = document.getElementById('pron-mode-wrap');
-  if(btn) S.showPron ? btn.classList.add('on') : btn.classList.remove('on');
-  if(wrap) wrap.style.display = S.showPron ? 'block' : 'none';
+let _toggleCooldown = false;
+function toggleRomaji() {
+  if (_toggleCooldown) return;
+  _toggleCooldown = true;
+  setTimeout(() => { _toggleCooldown = false; }, 500);
+  S.showRomaji = !S.showRomaji;
+  if (S.showRomaji) S.showHira = false; // 로마자/히라가나 동시 ON 방지
+  renderSettings();
   persistProgress();
+  pushMyProgress();
 }
-
-function setPronMode(mode) {
-  S.pronMode = mode;
-  document.getElementById('pron-roman-btn').classList.toggle('active', mode === 'roman');
-  document.getElementById('pron-hira-btn').classList.toggle('active', mode === 'hira');
+function toggleHira() {
+  if (_toggleCooldown) return;
+  _toggleCooldown = true;
+  setTimeout(() => { _toggleCooldown = false; }, 500);
+  S.showHira = !S.showHira;
+  if (S.showHira) S.showRomaji = false; // 로마자/히라가나 동시 ON 방지
+  renderSettings();
   persistProgress();
+  pushMyProgress();
+}
+// 하위 호환
+function setPronToggle(mode) {
+  if(mode === 'roman') toggleRomaji();
+  else if(mode === 'hira') toggleHira();
 }
 
 /* ═══════════════════════════════════════════
@@ -4070,6 +4351,7 @@ async function toggleNotif() {
       showToast('📱 앱 내 알림 활성화', '앱이 열려 있을 때 메구미가 알려드려요!', 'success');
       showMascot('cheer', '알림 켜졌어요! 🔔', '공부 안 하면 메구미가 찾아올 거예요 🐾', 'wiggle', 4000);
       scheduleNotification();
+      persistProgress();
       return;
     }
     const perm = await Notification.requestPermission();
@@ -4078,6 +4360,7 @@ async function toggleNotif() {
       showToast('🔔 알림 활성화 완료!', '공부 안 하면 메구미가 알려드려요 🐾', 'success');
       showMascot('cheer', '알림 켜졌어요! 🔔', `매일 ${S.notifTime}에 공부 안 했으면 알려드릴게요!`, 'wiggle', 4500);
       scheduleNotification();
+      registerPushSubscription(); // 권한 허용 직후 서버 푸시 구독 등록
     } else if(perm === 'denied') {
       showToast('❌ 알림 권한 거부됨', '브라우저 설정에서 알림을 허용해주세요', 'warning');
       S.notifEnabled = true;
@@ -4169,18 +4452,23 @@ function getDaysLeft() {
 /* ─── 로그인 시 알림 자동 활성화 ─── */
 async function autoEnableNotification() {
   if(!('Notification' in window)) return;
-  // 이미 활성화되어 있으면 스케줄만 재등록
-  if(S.notifEnabled) { scheduleNotification(); return; }
+  // 이미 활성화되어 있으면 스케줄만 재등록 + 구독 갱신
+  if(S.notifEnabled) {
+    scheduleNotification();
+    registerPushSubscription(); // 구독이 만료되었을 수 있으므로 항상 갱신
+    return;
+  }
   // 이미 거부된 경우 강제 요청 안 함
   if(Notification.permission === 'denied') return;
-  // 권한 요청 (granted 또는 default → 자동 활성화)
+  // 권한 요청
   try {
     const perm = await Notification.requestPermission();
-    if(perm === 'granted' || perm === 'default') {
+    if(perm === 'granted') {
       S.notifEnabled = true;
       persistProgress();
       pushMyProgress();
       scheduleNotification();
+      registerPushSubscription(); // 권한 허용 직후 구독 등록
       // 토글 UI 반영
       const t = document.getElementById('notif-toggle');
       if(t) t.classList.add('on');
@@ -4714,6 +5002,8 @@ function saveUserProgress(uid, data) {
   } catch(e){}
 }
 
+// loadUserPrefs / saveUserPrefs / applyUserPrefs — 제거됨 (스냅샷/Firebase 단일 소스 방식으로 교체)
+
 // ── Current user state ────────────────────────
 let CU = { uid:null, name:'' };
 
@@ -4735,7 +5025,7 @@ function buildProgressSnapshot() {
     allCompleted:[...S.allCompleted],
     notifEnabled:S.notifEnabled, notifTime:S.notifTime,
     darkMode:S.darkMode, sound:S.sound, qCount:S.qCount,
-    showPron:S.showPron, pronMode:S.pronMode,
+    showRomaji:S.showRomaji, showHira:S.showHira,
     enabledCats:[...S.enabledCats],
     lessonStars: S.lessonStars,
     titles: [...S.titles],
@@ -4744,6 +5034,8 @@ function buildProgressSnapshot() {
     couponRevealed: S.couponRevealed,
     gems: S.gems,
     streakShield: S.streakShield,
+    heartsSentToday: S.heartsSentToday,
+    heartRequestedToday: S.heartRequestedToday || '',
     savedAt: Date.now()
   };
 }
@@ -4770,8 +5062,13 @@ function applyProgressSnapshot(snap) {
   S.darkMode = snap.darkMode ?? false;
   S.sound = snap.sound ?? true;
   S.qCount = snap.qCount ?? 5;
-  S.showPron = snap.showPron ?? false;
-  S.pronMode = snap.pronMode ?? 'roman';
+  if(snap.showRomaji !== undefined) S.showRomaji = snap.showRomaji;
+  else if(snap.showPron !== undefined && snap.pronMode !== undefined) {
+    // 구버전 데이터 마이그레이션: showPron+pronMode → showRomaji/showHira
+    S.showRomaji = snap.showPron && snap.pronMode === 'roman';
+    S.showHira   = snap.showPron && snap.pronMode === 'hira';
+  }
+  if(snap.showHira !== undefined) S.showHira = snap.showHira;
   S.enabledCats = new Set(snap.enabledCats ?? []);
   S.lessonStars = snap.lessonStars ?? {};
   S.titles = new Set(snap.titles ?? []);
@@ -4780,6 +5077,13 @@ function applyProgressSnapshot(snap) {
   S.couponRevealed = snap.couponRevealed ?? false;
   S.gems = snap.gems ?? 0;
   S.streakShield = snap.streakShield ?? false;
+  // heartsSentToday: 오늘 날짜와 일치할 때만 복원
+  if(snap.heartsSentToday && snap.heartsSentToday.date === new Date().toDateString()) {
+    S.heartsSentToday = snap.heartsSentToday;
+  }
+  if(snap.heartRequestedToday === new Date().toDateString()) {
+    S.heartRequestedToday = snap.heartRequestedToday;
+  }
   document.documentElement.setAttribute('data-theme', S.darkMode?'dark':'light');
 }
 
@@ -4864,10 +5168,32 @@ function loginAs(uid, name) {
   // 버전 체크: progress 스냅샷 외부 키로 확인 (persistProgress에 덮이지 않음)
   const storedVer = localStorage.getItem(VERSION_KEY);
   if(storedVer !== DATA_VERSION) {
-    // 버전 불일치 → 전체 초기화
+    // 버전 불일치 → 게임 진행 초기화 (단, 사용자 설정은 보존)
+    const _savedSettings = saved ? {
+      darkMode:    saved.darkMode,
+      sound:       saved.sound,
+      notifEnabled:saved.notifEnabled,
+      notifTime:   saved.notifTime,
+      showRomaji:  saved.showRomaji ?? (saved.showPron && saved.pronMode === 'roman'),
+      showHira:    saved.showHira   ?? (saved.showPron && saved.pronMode === 'hira'),
+      qCount:      saved.qCount,
+      dailyGoal:   saved.dailyGoal,
+    } : null;
     PRESET_ACCOUNTS.forEach(a => saveUserProgress(a.id, null));
     localStorage.setItem(VERSION_KEY, DATA_VERSION);
     saved = null;
+    // 버전 초기화 후에도 이전 설정 복원 (다크모드·발음표시 등이 초기화되는 버그 방지)
+    if(_savedSettings) {
+      if(_savedSettings.darkMode    !== undefined) S.darkMode    = _savedSettings.darkMode;
+      if(_savedSettings.sound       !== undefined) S.sound       = _savedSettings.sound;
+      if(_savedSettings.notifEnabled!== undefined) S.notifEnabled= _savedSettings.notifEnabled;
+      if(_savedSettings.notifTime   !== undefined) S.notifTime   = _savedSettings.notifTime;
+      if(_savedSettings.showRomaji  !== undefined) S.showRomaji  = _savedSettings.showRomaji;
+      if(_savedSettings.showHira    !== undefined) S.showHira    = _savedSettings.showHira;
+      if(_savedSettings.qCount      !== undefined) S.qCount      = _savedSettings.qCount;
+      if(_savedSettings.dailyGoal   !== undefined) S.dailyGoal   = _savedSettings.dailyGoal;
+      document.documentElement.setAttribute('data-theme', S.darkMode ? 'dark' : 'light');
+    }
   }
   if(saved) {
     const savedDay = saved.savedAt ? new Date(saved.savedAt).toDateString() : '';
@@ -4907,7 +5233,7 @@ function loginAs(uid, name) {
     S.gems=0; S.streakShield=false; S.couponRevealed=false;
     S.notifEnabled=true; S.notifTime='09:00';
     S.darkMode=false; S.sound=true; S.qCount=5;
-    S.showPron=false; S.pronMode='roman';
+    S.showRomaji=true; S.showHira=false;
     S.enabledCats=new Set(['greet','intro','faith','mission','lords','creed','gospel','praise']);
     S.lastHeartRefillDate = new Date().toDateString(); // 초기화 시 오늘 날짜 기록
   }
@@ -4923,11 +5249,14 @@ function loginAs(uid, name) {
     }
   }
 
+  // (프리퍼런스 시스템 제거됨 — 스냅샷/Firebase가 단일 소스)
+
   updateTopbarUser();
   document.querySelector('.bottom-nav').style.display = 'flex';
   document.getElementById('screen-auth').classList.remove('active');
   initTTSVoice();
   goTo('home');
+  renderSettings(); // 설정 UI를 최신 S 상태로 동기화
   // 알림 기본 활성화: 처음 로그인 시 자동 권한 요청 후 활성화
   autoEnableNotification();
   checkMissedStudy();                          // 어제 미공부 확인
@@ -4970,7 +5299,9 @@ function doLogout() {
   S.gems=0; S.streakShield=false; S.couponRevealed=false;
   S.lastHeartRefillDate=''; S.maxHearts=5;
   S.notifEnabled=true; S.notifTime='09:00'; S.sound=true; S.darkMode=false; S.qCount=5;
+  S.showRomaji=false; S.showHira=false;
   S.enabledCats=new Set();
+  document.documentElement.setAttribute('data-theme','light'); // 다크모드 시각 상태도 반드시 초기화
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('screen-auth').classList.add('active');
@@ -5167,9 +5498,12 @@ function pushMyProgress() {
     maxHearts:          S.maxHearts,
     notifTime:          S.notifTime,
     notifEnabled:       S.notifEnabled,
+    daysLeft:           getDaysLeft(),
     sound:              S.sound,
     darkMode:           S.darkMode,
     qCount:             S.qCount,
+    showRomaji: S.showRomaji,
+    showHira:   S.showHira,
     dailyGoal:          S.dailyGoal,
     heartsSentToday:      S.heartsSentToday,
     heartRequestedToday:  S.heartRequestedToday || '',
@@ -5237,6 +5571,13 @@ function restoreFromFirebase() {
       }
       if(data.qCount          !== undefined) S.qCount          = data.qCount;
       if(data.dailyGoal       !== undefined) S.dailyGoal       = data.dailyGoal;
+      if(data.showRomaji !== undefined) S.showRomaji = data.showRomaji;
+      else if(data.showPron !== undefined && data.pronMode !== undefined) {
+        // 구버전 Firebase 마이그레이션
+        S.showRomaji = data.showPron && data.pronMode === 'roman';
+        S.showHira   = data.showPron && data.pronMode === 'hira';
+      }
+      if(data.showHira !== undefined) S.showHira = data.showHira;
       // heartsSentToday: 오늘 날짜와 일치할 때만 복원 (날짜 지난 건 무시)
       if(data.heartsSentToday && data.heartsSentToday.date === new Date().toDateString()) {
         S.heartsSentToday = data.heartsSentToday;
@@ -5257,8 +5598,9 @@ function restoreFromFirebase() {
           saveAllUsers(users);
         }
       }
-      persistProgress();  // localStorage에도 저장
+      persistProgress();  // Firebase 복원 결과를 localStorage에 저장
       renderHome();       // 화면 업데이트
+      renderSettings();   // 설정 토글 UI 즉시 갱신
       pushMyProgress();   // 복원된 데이터로 Firebase 업데이트
     } else {
       // Firebase에도 데이터 없음 → 현재 상태(초기값) push

@@ -432,6 +432,7 @@ body{
   display:flex;flex-direction:column;
   padding:24px 20px 20px;gap:20px;
 }
+.quiz-body>*{flex-shrink:0;}
 .quiz-prompt{font-size:13px;font-weight:600;color:var(--text2);}
 .quiz-question{font-size:22px;font-weight:800;line-height:1.4;}
 .quiz-jp{font-size:17px;color:var(--text2);margin-top:4px;}
@@ -528,11 +529,12 @@ body{
 [data-theme="dark"] .qtb-fill{background:#0d2210;color:#58CC02;}
 
 /* ── ARRANGE TYPE ────────────────────────────── */
-.arr-answer-bar{min-height:54px;border:2.5px dashed var(--border);border-radius:var(--r-sm);padding:8px 12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:var(--bg);margin:8px 0 4px;transition:border-color .2s;}
+.arr-answer-bar{min-height:54px;border:2.5px dashed var(--border);border-radius:var(--r-sm);padding:8px 12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;align-content:flex-start;background:var(--bg);margin:8px 0 4px;transition:border-color .2s;flex-shrink:0;}
 .arr-answer-bar.has-tiles{border-color:var(--blue);}
 .arr-placeholder{font-size:13px;color:var(--text2);font-weight:500;}
-.arr-tiles{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
-.tile-btn{padding:10px 15px;border:2.5px solid var(--blue);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:16px;font-weight:700;cursor:pointer;transition:all .12s;-webkit-tap-highlight-color:transparent;}
+.arr-tiles{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;flex-shrink:0;}
+.tile-btn{padding:10px 15px;border:2.5px solid var(--blue);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:16px;font-weight:700;cursor:pointer;transition:all .12s;-webkit-tap-highlight-color:transparent;display:inline-flex;flex-direction:column;align-items:center;gap:2px;}
+.tile-romaji{font-size:10px;font-weight:500;color:var(--text2);letter-spacing:.03em;}
 .tile-btn:active{transform:scale(.93);}
 .tile-btn.used{opacity:.25;pointer-events:none;}
 .placed-tile{padding:9px 14px;border:2.5px solid var(--blue);border-radius:var(--r-sm);background:var(--blue-lt);color:var(--text);font-size:16px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;}
@@ -2040,9 +2042,10 @@ body{
       </div>
     </div>
 
-    <!-- Widget / Display Section -->
+    <!-- Learning Settings -->
     <div class="settings-section">
       <div class="ss-header">🎯 학습 설정</div>
+      <div class="chip-group" id="cat-chips" style="display:none;"></div>
       <div class="setting-row">
         <div class="sr-left">
           <div class="sr-label">하루 목표 XP</div>
@@ -2067,7 +2070,6 @@ body{
         </div>
       </div>
     </div>
-
 
     <!-- Display Section -->
     <div class="settings-section">
@@ -2363,7 +2365,7 @@ const S = {
   notifEnabled:true, notifTime:'09:00',
   darkMode:false, sound:true,
   qCount:5,
-  showRomaji:false, showHira:false,
+  showRomaji:true, showHira:false,
   enabledCats:new Set(),
   lessonStars: {},  // lessonId → 0,1,2,3
   titles: new Set(),        // earned title strings
@@ -3388,8 +3390,15 @@ function hideWordPopup() {
   document.querySelectorAll('.jp-word.tapped,.rev-jp-word.tapped').forEach(el => el.classList.remove('tapped'));
 }
 
-// 히라가나 → 로마자 변환 (Hepburn 표기법)
+// 히라가나·카타카나 → 로마자 변환 (Hepburn 표기법)
 function hiraganaToRomaji(str) {
+  // 조사 は→wa, へ→e (단독 토큰일 때만)
+  if (str === 'は') return 'wa';
+  if (str === 'へ') return 'e';
+  // カタカナ → ひらがな 정규화 (ァ-ヶ → ぁ-ゖ)
+  str = str.replace(/[\u30A1-\u30F6]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
+  // ッ(카타카나 촉음) → っ, ー는 유지
+  str = str.replace(/\u30C3/g, 'っ');
   // 2글자 조합 (きゃ 등) 먼저 처리
   const combo = {
     'きゃ':'kya','きゅ':'kyu','きょ':'kyo',
@@ -3447,10 +3456,77 @@ function hiraganaToRomaji(str) {
     const two = str[i] + (str[i+1] || '');
     if (combo[two]) { result += combo[two]; i += 2; continue; }
     if (single[str[i]]) { result += single[str[i]]; i++; continue; }
-    // 한자·카타카나·기타는 그대로
+    // 한자·기타는 그대로
     result += str[i]; i++;
   }
   return result;
+}
+
+// 타일(개별 토큰) → 읽기 변환: 전체 WORD_DATA에서 표면형→읽기 글로벌 맵 사용
+let _surfaceReadMap = null;
+function _buildSurfaceMap() {
+  if (_surfaceReadMap) return _surfaceReadMap;
+  _surfaceReadMap = {};
+  if (typeof WORD_DATA === 'undefined') return _surfaceReadMap;
+  for (const key in WORD_DATA) {
+    const tokens = WORD_DATA[key];
+    // 개별 토큰 등록
+    tokens.forEach(tk => {
+      if (tk[0] && tk[1] && tk[0] !== tk[1]) _surfaceReadMap[tk[0]] = tk[1];
+    });
+    // 연속 토큰 결합도 등록 (tokenizeJp가 여러 형태소를 하나로 묶을 수 있음)
+    for (let start = 0; start < tokens.length; start++) {
+      let surface = '', reading = '';
+      for (let end = start; end < tokens.length; end++) {
+        surface += tokens[end][0];
+        reading += tokens[end][1] || tokens[end][0];
+        if (end > start && surface !== reading) _surfaceReadMap[surface] = reading;
+      }
+    }
+  }
+  return _surfaceReadMap;
+}
+// 전체 WORD_DATA의 토큰 배열 캐시 (순차 매칭용)
+let _allTokenArrays = null;
+function _getAllTokenArrays() {
+  if (_allTokenArrays) return _allTokenArrays;
+  _allTokenArrays = [];
+  if (typeof WORD_DATA === 'undefined') return _allTokenArrays;
+  for (const key in WORD_DATA) _allTokenArrays.push(WORD_DATA[key]);
+  return _allTokenArrays;
+}
+function _tileToReading(tile, useRomaji) {
+  const map = _buildSurfaceMap();
+  if (map[tile]) {
+    return useRomaji ? hiraganaToRomaji(map[tile]) : map[tile];
+  }
+  // 순차 매칭: 타일 텍스트를 WORD_DATA 토큰으로 소비하며 읽기 조합
+  const arrays = _getAllTokenArrays();
+  for (const tokens of arrays) {
+    let remaining = tile, reading = '', matched = false;
+    for (const tk of tokens) {
+      if (!remaining) break;
+      if (remaining.startsWith(tk[0])) {
+        reading += tk[1] || tk[0];
+        remaining = remaining.slice(tk[0].length);
+        matched = true;
+      } else if (matched) {
+        if (tk[0].startsWith(remaining) || remaining.startsWith(tk[0].slice(0, remaining.length))) {
+          const ratio = remaining.length / tk[0].length;
+          const partialReading = (tk[1] || tk[0]).slice(0, Math.ceil((tk[1] || tk[0]).length * ratio));
+          reading += partialReading;
+          remaining = '';
+        }
+        break;
+      }
+    }
+    if (!remaining && reading) {
+      return useRomaji ? hiraganaToRomaji(reading) : reading;
+    }
+  }
+  const converted = hiraganaToRomaji(tile);
+  if (/[\u4e00-\u9faf]/.test(converted)) return '';
+  return useRomaji ? converted : '';
 }
 
 // 순수 히라가나·카타카나 여부 판정
@@ -3562,7 +3638,7 @@ function renderMCQ(q) {
     <div class="quiz-question">${q.q}</div>
     ${showJp ? `<div class="quiz-jp-row">
       <div class="quiz-jp-wrap" style="flex:1;">
-        ${buildJpWordSpans(q.jp, S.showRomaji, S.showHira, 'jp-word', 'jp-word-furi', 'jp-word-text', 'jp-word-row')}
+        ${buildJpWordSpans(q.jp, false, false, 'jp-word', 'jp-word-furi', 'jp-word-text', 'jp-word-row')}
       </div>
       <button class="speak-btn" id="speak-mcq" onclick="speakJapanese('${jpSafe}',this)" title="발음 듣기">🔊</button>
     </div>` : (q.jp ? `<div class="quiz-jp-row"><button class="speak-btn" id="speak-mcq" onclick="speakJapanese('${jpSafe}',this)" title="발음 듣기">🔊</button></div>` : '')}
@@ -3685,13 +3761,18 @@ function renderArrange(q) {
     <div class="arr-speak-row">
       <div style="flex:1;">
         <div class="quiz-jp" style="font-size:14px;">${hint}</div>
-        ${S.showRomaji && q.romaji ? `<div class="jp-romaji-line" style="margin-top:3px;">${q.romaji}</div>` : ''}
       </div>
       <button class="speak-btn" id="speak-arr" onclick="speakJapanese('${jpSafe}',this)" title="발음 듣기">🔊</button>
     </div>
     <div class="arr-answer-bar" id="arr-answer"><span class="arr-placeholder">카드를 여기에 놓으세요</span></div>
     <div class="arr-tiles" id="arr-source">
-      ${allTiles.map((t,i)=>`<button class="tile-btn" data-idx="${i}" data-text="${t.replace(/"/g,'&quot;')}" onclick="arrangeTileTap(this)">${t}</button>`).join('')}
+      ${allTiles.map((t,i)=>{
+        let pron = '';
+        if (S.showRomaji || S.showHira) {
+          pron = _tileToReading(t, S.showRomaji);
+        }
+        return `<button class="tile-btn" data-idx="${i}" data-text="${t.replace(/"/g,'&quot;')}" onclick="arrangeTileTap(this)">${t}${pron ? `<span class="tile-romaji">${pron}</span>` : ''}</button>`;
+      }).join('')}
     </div>
     <div class="quiz-feedback" id="feedback"></div>
     <button class="arr-check-btn" id="arr-check" onclick="checkArrange('${jpSafe}')">확인하기</button>`;
@@ -5152,7 +5233,7 @@ function loginAs(uid, name) {
     S.gems=0; S.streakShield=false; S.couponRevealed=false;
     S.notifEnabled=true; S.notifTime='09:00';
     S.darkMode=false; S.sound=true; S.qCount=5;
-    S.showRomaji=false; S.showHira=false;
+    S.showRomaji=true; S.showHira=false;
     S.enabledCats=new Set(['greet','intro','faith','mission','lords','creed','gospel','praise']);
     S.lastHeartRefillDate = new Date().toDateString(); // 초기화 시 오늘 날짜 기록
   }
