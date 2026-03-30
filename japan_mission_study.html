@@ -452,16 +452,10 @@ body{
 @media (hover:hover) and (pointer:fine){
   .choice-btn:not(.disabled):hover{border-color:var(--blue);background:var(--blue-lt);}
 }
-/* 터치/클릭 직후 시각 피드백 (:.active는 손가락 떼는 순간 해제됨) */
-.choice-btn:not(.disabled):not(.correct):not(.wrong):active{
-  border-color:var(--blue);background:var(--blue-lt);
-}
 @media(hover:hover){.choice-btn:not(.disabled):hover{border-color:var(--blue);background:var(--blue-lt);}}
 @media(hover:hover){[data-theme="dark"] .choice-btn:not(.disabled):hover{background:#0d2a3a;color:#7dd8fd;}}
 .choice-btn:focus{outline:none;}
 .choice-btn:focus:not(:focus-visible){border-color:var(--border);background:var(--bg);color:var(--text);}
-.choice-btn:focus{outline:none;}
-.choice-btn:focus:not(:focus-visible){border-color:var(--border);background:var(--bg);}
 .choice-btn.correct{border-color:var(--green);background:var(--green-lt);color:var(--green-dk);}
 .choice-btn.wrong{border-color:var(--red);background:var(--red-lt);color:var(--red);}
 .choice-btn.disabled{cursor:not-allowed;}
@@ -667,6 +661,10 @@ body{
   width:48px;height:28px;border-radius:99px;cursor:pointer;
   position:relative;transition:background .2s;flex-shrink:0;
   border:none;background:var(--bg3);
+  -webkit-appearance:none;appearance:none;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+  outline:none;
 }
 .toggle.on{background:var(--green);}
 .toggle::after{
@@ -4228,14 +4226,23 @@ function toggleSound() {
   pushMyProgress();
 }
 
+let _toggleCooldown = false;
 function toggleRomaji() {
+  if (_toggleCooldown) return;
+  _toggleCooldown = true;
+  setTimeout(() => { _toggleCooldown = false; }, 500);
   S.showRomaji = !S.showRomaji;
+  if (S.showRomaji) S.showHira = false; // 로마자/히라가나 동시 ON 방지
   renderSettings();
   persistProgress();
   pushMyProgress();
 }
 function toggleHira() {
+  if (_toggleCooldown) return;
+  _toggleCooldown = true;
+  setTimeout(() => { _toggleCooldown = false; }, 500);
   S.showHira = !S.showHira;
+  if (S.showHira) S.showRomaji = false; // 로마자/히라가나 동시 ON 방지
   renderSettings();
   persistProgress();
   pushMyProgress();
