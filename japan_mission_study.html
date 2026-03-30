@@ -2059,26 +2059,19 @@ body{
     <!-- Pronunciation Section -->
     <div class="settings-section">
       <div class="ss-header">🈳 발음 표시</div>
-      <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:12px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div class="sr-left">
-            <div class="sr-label">한자 위 발음 표시</div>
-            <div class="sr-sub">퀴즈에서 한자 위에 읽는 법을 보여줘요</div>
-          </div>
-          <button class="toggle" id="pron-toggle" onclick="toggleShowPron()"></button>
+      <div class="setting-row">
+        <div class="sr-left">
+          <div class="sr-label">로마자 발음 표시</div>
+          <div class="sr-sub" style="font-size:12px;letter-spacing:.04em;">ni · hon · go</div>
         </div>
-        <div id="pron-mode-wrap" style="display:none;">
-          <div class="pron-mode-row">
-            <button class="pron-mode-btn active" id="pron-roman-btn" onclick="setPronMode('roman')">
-              <span class="pmd-jp" style="font-size:13px;letter-spacing:.05em;">ni hon go</span>
-              <span class="pmd-sub">로마자 (Romanized)</span>
-            </button>
-            <button class="pron-mode-btn" id="pron-hira-btn" onclick="setPronMode('hira')">
-              <span class="pmd-jp">にほんご</span>
-              <span class="pmd-sub">히라가나 (Japanese)</span>
-            </button>
-          </div>
+        <button class="toggle" id="pron-roman-toggle" onclick="setPronToggle('roman')"></button>
+      </div>
+      <div class="setting-row">
+        <div class="sr-left">
+          <div class="sr-label">히라가나 발음 표시</div>
+          <div class="sr-sub">にほんご</div>
         </div>
+        <button class="toggle" id="pron-hira-toggle" onclick="setPronToggle('hira')"></button>
       </div>
     </div>
 
@@ -4035,15 +4028,11 @@ function renderSettings() {
 
   document.getElementById('notif-time').value = S.notifTime;
 
-  // Pron toggle
-  const pt = document.getElementById('pron-toggle');
-  if(pt) S.showPron ? pt.classList.add('on') : pt.classList.remove('on');
-  const pw = document.getElementById('pron-mode-wrap');
-  if(pw) pw.style.display = S.showPron ? 'block' : 'none';
-  const prb = document.getElementById('pron-roman-btn');
-  const phb = document.getElementById('pron-hira-btn');
-  if(prb) prb.classList.toggle('active', S.pronMode === 'roman');
-  if(phb) phb.classList.toggle('active', S.pronMode === 'hira');
+  // Pron toggles (로마자 / 히라가나 독립 토글)
+  const prt = document.getElementById('pron-roman-toggle');
+  const pht = document.getElementById('pron-hira-toggle');
+  if(prt) (S.showPron && S.pronMode === 'roman') ? prt.classList.add('on') : prt.classList.remove('on');
+  if(pht) (S.showPron && S.pronMode === 'hira')  ? pht.classList.add('on') : pht.classList.remove('on');
 
 }
 
@@ -4140,25 +4129,23 @@ function toggleSound() {
   pushMyProgress();
 }
 
-function toggleShowPron() {
-  S.showPron = !S.showPron;
-  const btn = document.getElementById('pron-toggle');
-  const wrap = document.getElementById('pron-mode-wrap');
-  if(btn) S.showPron ? btn.classList.add('on') : btn.classList.remove('on');
-  if(wrap) wrap.style.display = S.showPron ? 'block' : 'none';
-  saveUserPrefs();   // 설정 전용 저장소에 즉시 저장
+function setPronToggle(mode) {
+  // 이미 켜진 모드를 다시 누르면 OFF, 아니면 해당 모드로 ON
+  if(S.showPron && S.pronMode === mode) {
+    S.showPron = false;
+  } else {
+    S.showPron = true;
+    S.pronMode = mode;
+  }
+  renderSettings();
+  saveUserPrefs();
   persistProgress();
   pushMyProgress();
 }
 
-function setPronMode(mode) {
-  S.pronMode = mode;
-  document.getElementById('pron-roman-btn').classList.toggle('active', mode === 'roman');
-  document.getElementById('pron-hira-btn').classList.toggle('active', mode === 'hira');
-  saveUserPrefs();   // 설정 전용 저장소에 즉시 저장
-  persistProgress();
-  pushMyProgress();
-}
+// 하위 호환: 이전 코드에서 직접 호출될 경우를 대비
+function toggleShowPron() { setPronToggle(S.pronMode || 'roman'); }
+function setPronMode(mode) { setPronToggle(mode); }
 
 /* ═══════════════════════════════════════════
    NOTIFICATIONS
