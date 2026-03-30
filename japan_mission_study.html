@@ -1223,34 +1223,46 @@ body{
 [data-theme="dark"] .reading-text{color:#7dd8fd;}
 .quiz-jp{font-size:16px;color:var(--text2);margin-top:4px;font-weight:600;}
 
-/* ── FURIGANA (pronunciation above JP text) ──── */
-.quiz-jp-wrap{display:flex;flex-direction:column;align-items:flex-start;gap:1px;}
 /* ── WORD TAP ──────────────────────────────────── */
+.quiz-jp-wrap{display:flex;flex-direction:column;align-items:flex-start;gap:1px;}
+/* Duolingo 스타일: JP 텍스트를 flex column으로 감싸는 블록 */
+.jp-word-block{display:flex;flex-direction:column;align-items:flex-start;gap:5px;}
 .jp-word-row{display:flex;flex-wrap:wrap;gap:2px;align-items:flex-end;}
-.jp-word{display:inline-flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;
+.jp-word{display:inline-flex;align-items:center;cursor:pointer;
   padding:2px 3px;border-radius:6px;transition:background .12s;}
 .jp-word:active{background:var(--blue-lt);}
 .jp-word.tapped{background:var(--blue-lt);}
-.jp-word-furi{font-size:9px;color:var(--blue);font-weight:600;line-height:1;white-space:nowrap;min-height:10px;}
-[data-theme="dark"] .jp-word-furi{color:#7dd8fd;}
-.choice-furi-wrap{display:inline-flex;flex-wrap:wrap;align-items:flex-end;gap:2px;pointer-events:none;}
-.choice-furi-word{display:inline-flex;flex-direction:column;align-items:center;gap:1px;}
-.choice-furi-rt{font-size:9px;color:var(--blue);font-weight:600;line-height:1;min-height:10px;white-space:nowrap;}
-[data-theme="dark"] .choice-furi-rt{color:#7dd8fd;}
 .jp-word-text{font-size:20px;font-weight:800;color:var(--text);line-height:1.2;
   border-bottom:1.5px dashed var(--border);}
 .jp-word:active .jp-word-text,.jp-word.tapped .jp-word-text{border-color:var(--blue);}
 
+/* Duolingo 스타일 로마자 한 줄 (JP 아래) */
+.jp-romaji-line{
+  font-size:13px;font-weight:500;color:var(--blue);
+  letter-spacing:.04em;word-spacing:4px;line-height:1.4;
+}
+[data-theme="dark"] .jp-romaji-line{color:#7dd8fd;}
+
+/* 보기 버튼: JP 텍스트 + 로마자 서브라인 */
+.choice-content{display:flex;flex-direction:column;gap:3px;flex:1;}
+.choice-jp{font-size:15px;font-weight:600;line-height:1.3;}
+.choice-sub{font-size:11px;font-weight:500;color:var(--blue);letter-spacing:.04em;}
+[data-theme="dark"] .choice-sub{color:#7dd8fd;}
+
 /* Rev card word tap */
-.rev-jp-word-row{display:flex;flex-wrap:wrap;gap:3px;align-items:flex-end;justify-content:center;margin-bottom:4px;}
-.rev-jp-word{display:inline-flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;
+.rev-jp-word-block{display:flex;flex-direction:column;align-items:center;gap:5px;}
+.rev-jp-word-row{display:flex;flex-wrap:wrap;gap:3px;align-items:flex-end;justify-content:center;}
+.rev-jp-word{display:inline-flex;align-items:center;cursor:pointer;
   padding:4px 4px 2px;border-radius:8px;transition:background .12s;}
 .rev-jp-word:active,.rev-jp-word.tapped{background:rgba(28,176,246,.12);}
-.rev-jp-word-furi{font-size:10px;color:var(--blue);font-weight:600;line-height:1;min-height:11px;white-space:nowrap;}
-[data-theme="dark"] .rev-jp-word-furi{color:#7dd8fd;}
 .rev-jp-word-text{font-size:28px;font-weight:800;color:var(--text);line-height:1.2;
   border-bottom:1.5px dashed rgba(28,176,246,.4);}
 .rev-jp-word:active .rev-jp-word-text,.rev-jp-word.tapped .rev-jp-word-text{border-color:var(--blue);}
+.rev-jp-romaji-line{
+  font-size:15px;font-weight:500;color:var(--blue);
+  letter-spacing:.05em;word-spacing:5px;line-height:1.4;text-align:center;
+}
+[data-theme="dark"] .rev-jp-romaji-line{color:#7dd8fd;}
 
 /* Word meaning popup */
 #word-popup{
@@ -1267,10 +1279,9 @@ body{
 [data-theme="dark"] .wp-reading{color:#7dd8fd;}
 .wp-meaning{font-size:13px;font-weight:700;color:var(--text2);}
 .wp-no-meaning{font-size:12px;color:var(--text2);font-style:italic;}
-.quiz-jp-furigana{font-size:10px;color:var(--blue);font-weight:600;letter-spacing:.03em;line-height:1.2;white-space:pre-wrap;}
-[data-theme="dark"] .quiz-jp-furigana{color:#7dd8fd;}
-.rev-jp-furigana{font-size:12px;color:var(--blue);font-weight:600;letter-spacing:.03em;margin-bottom:4px;}
-[data-theme="dark"] .rev-jp-furigana{color:#7dd8fd;}
+/* 피드백 정답 로마자 서브라인 */
+.fb-ans-romaji{font-size:12px;font-weight:500;color:var(--blue);letter-spacing:.04em;margin-top:2px;}
+[data-theme="dark"] .fb-ans-romaji{color:#7dd8fd;}
 
 /* ── PRON MODE PICKER (settings) ──────────────── */
 .pron-mode-row{display:flex;gap:8px;margin-top:10px;}
@@ -3416,63 +3427,96 @@ function hiraganaToRomaji(str) {
   return result;
 }
 
-// 순수 히라가나·카타카나 여부 판정 (한국어·한자 섞인 보기는 변환 불필요)
+// 순수 히라가나·카타카나 여부 판정
 function isPureKana(str) {
   return /^[\u3040-\u30ff\uff65-\uff9fーァ-ヶ〜\s・]+$/.test(str);
 }
 
-// 보기 버튼 전용: 클릭 핸들러 없이 후리가나만 표시 (단어 팝업 미발동)
-function buildChoiceHtml(text, showRomaji, showHira) {
-  if (!showRomaji && !showHira) return text;
-  const tokens = (typeof WORD_DATA !== 'undefined' && WORD_DATA[text]) ? WORD_DATA[text] : null;
-
-  if (!tokens) {
-    // WORD_DATA 없는 경우 — 순수 가나면 직접 변환
-    if(showRomaji && isPureKana(text)) {
-      const furi = hiraganaToRomaji(text);
-      return `<span class="choice-furi-word"><span class="choice-furi-rt">${furi}</span><span>${text}</span></span>`;
-    }
-    return text;
+/* ═══════════════════════════════════════════════════
+   Duolingo 스타일 ROMAJI 헬퍼
+   jp → romaji 매핑은 LESSONS 데이터에서 자동 빌드
+═══════════════════════════════════════════════════ */
+let _jpRomajiMap = null;
+function getJpRomajiMap() {
+  if (!_jpRomajiMap) {
+    _jpRomajiMap = {};
+    LESSONS.forEach(l => l.questions.forEach(q => {
+      if (q.jp && q.romaji) _jpRomajiMap[q.jp] = q.romaji;
+      // choices 배열의 각 항목도 미리 매핑 (lessons.js에 romaji 없는 오답 대응)
+    }));
   }
-
-  return '<span class="choice-furi-wrap">' +
-    tokens.map(t => {
-      const surface = t[0], reading = t[1] || surface;
-      // 둘 다 켜진 경우: 로마자 우선 표시 (히라가나는 단어 팝업에서 확인 가능)
-      const furi = showRomaji ? hiraganaToRomaji(reading)
-                 : showHira  ? reading
-                 : '';
-      return `<span class="choice-furi-word"><span class="choice-furi-rt">${furi}</span><span>${surface}</span></span>`;
-    }).join('') + '</span>';
+  return _jpRomajiMap;
 }
 
+// 일본어 텍스트 → 로마자 (Duolingo 스타일 아래 표시용)
+function getTextRomaji(text) {
+  if (!text) return '';
+  // 한국어 텍스트는 변환 불필요
+  if (/^[ㄱ-ㅎ가-힣\s·,!?.。、！？…\-→↔←（）()「」『』〔〕]+$/.test(text)) return '';
+  // 레슨 jp 필드에서 직접 조회
+  const m = getJpRomajiMap()[text];
+  if (m) return m;
+  // WORD_DATA 토큰 readings → 로마자
+  if (typeof WORD_DATA !== 'undefined' && WORD_DATA[text]) {
+    return WORD_DATA[text].map(t => hiraganaToRomaji(t[1] || t[0])).join('  ');
+  }
+  // 순수 가나 → 직접 변환
+  if (isPureKana(text)) return hiraganaToRomaji(text);
+  return '';
+}
+
+// 일본어 텍스트 → 히라가나 (히라가나 모드용)
+function getTextHira(text) {
+  if (!text) return '';
+  if (/^[ㄱ-ㅎ가-힣\s·,!?.。、！？…\-→↔←（）()「」『』〔〕]+$/.test(text)) return '';
+  if (typeof WORD_DATA !== 'undefined' && WORD_DATA[text]) {
+    return WORD_DATA[text].map(t => t[1] || t[0]).join('　');
+  }
+  if (isPureKana(text)) return text;
+  return '';
+}
+
+/* ─── 보기 버튼 HTML (Duolingo 스타일: JP 위, 로마자 아래) ─── */
+function buildChoiceHtml(text, showRomaji, showHira) {
+  // 한국어 보기는 발음 표시 불필요
+  const isKorean = /^[ㄱ-ㅎ가-힣\s·,!?.。、！？…\-→↔←（）()「」]+$/.test(text);
+  if (isKorean || (!showRomaji && !showHira)) return text;
+
+  const sub = showRomaji ? getTextRomaji(text) : getTextHira(text);
+  if (!sub) return text;
+
+  return `<span class="choice-content"><span class="choice-jp">${text}</span><span class="choice-sub">${sub}</span></span>`;
+}
+
+/* ─── 문제 JP 텍스트 + 로마자 아래 한 줄 (단어 팝업 유지) ─── */
 function buildJpWordSpans(jp, showRomaji, showHira, wordCls, furiCls, textCls, rowCls) {
   const tokens = (typeof WORD_DATA !== 'undefined' && WORD_DATA[jp]) ? WORD_DATA[jp] : null;
+
+  let spans;
   if (!tokens) {
-    return `<div class="${rowCls}">
-      <div class="${wordCls}" onclick="showWordPopup(this,'${jp.replace(/'/g,"\\'")}','','')">
-        <span class="${furiCls}"></span>
-        <span class="${textCls}">${jp}</span>
-      </div>
-    </div>`;
+    const jpSafe = jp.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    spans = `<div class="${wordCls}" onclick="showWordPopup(this,'${jpSafe}','','')"><span class="${textCls}">${jp}</span></div>`;
+  } else {
+    spans = tokens.map(t => {
+      const surface = t[0], reading = t[1] || surface, meaning = t[2] || '';
+      const surfSafe = surface.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+      const readSafe = reading.replace(/'/g,"\\'");
+      const meanSafe = meaning.replace(/'/g,"\\'");
+      return `<div class="${wordCls}" onclick="showWordPopup(this,'${surfSafe}','${readSafe}','${meanSafe}')"><span class="${textCls}">${surface}</span></div>`;
+    }).join('');
   }
-  const spans = tokens.map(t => {
-    const surface = t[0];
-    const reading = t[1] || surface;
-    const meaning = t[2] || '';
-    // 둘 다 켜진 경우: 로마자 우선
-    const furiText = showRomaji ? hiraganaToRomaji(reading)
-                   : showHira  ? reading
-                   : '';
-    const surfSafe = surface.replace(/'/g,"\\'").replace(/"/g,'&quot;');
-    const readSafe = reading.replace(/'/g,"\\'");
-    const meanSafe = meaning.replace(/'/g,"\\'");
-    return `<div class="${wordCls}" onclick="showWordPopup(this,'${surfSafe}','${readSafe}','${meanSafe}')">
-      <span class="${furiCls}">${furiText}</span>
-      <span class="${textCls}">${surface}</span>
-    </div>`;
-  }).join('');
-  return `<div class="${rowCls}">${spans}</div>`;
+
+  // Duolingo 스타일: 로마자/히라가나 한 줄 아래
+  const isRevCard = rowCls === 'rev-jp-word-row';
+  const blockCls = isRevCard ? 'rev-jp-word-block' : 'jp-word-block';
+  const lineCls  = isRevCard ? 'rev-jp-romaji-line' : 'jp-romaji-line';
+  let subLine = '';
+  if (showRomaji || showHira) {
+    const sub = showRomaji ? getTextRomaji(jp) : getTextHira(jp);
+    if (sub) subLine = `<div class="${lineCls}">${sub}</div>`;
+  }
+
+  return `<div class="${blockCls}"><div class="${rowCls}">${spans}</div>${subLine}</div>`;
 }
 
 function renderMCQ(q) {
@@ -3496,8 +3540,7 @@ function renderMCQ(q) {
       </div>
       <button class="speak-btn" id="speak-mcq" onclick="speakJapanese('${jpSafe}',this)" title="발음 듣기">🔊</button>
     </div>` : (q.jp ? `<div class="quiz-jp-row"><button class="speak-btn" id="speak-mcq" onclick="speakJapanese('${jpSafe}',this)" title="발음 듣기">🔊</button></div>` : '')}
-    ${S.showRomaji && q.romaji ? `<div class="quiz-jp-furigana" style="margin:2px 0 4px;">${q.romaji}</div>` : ''}
-    ${showReading && !S.showRomaji && !S.showHira ? `<div class="reading-bubble"><span class="reading-label">발음</span><span class="reading-text">${q.reading}</span></div>` : ''}
+    ${!S.showRomaji && !S.showHira && showReading ? `<div class="reading-bubble"><span class="reading-label">발음</span><span class="reading-text">${q.reading}</span></div>` : ''}
     <div class="quiz-choices" id="choices">
       ${shuffled.map((origIdx,i)=>`
         <button class="choice-btn" data-choice="${q.choices[origIdx].replace(/"/g,'&quot;')}" onclick="selectAnswer(this,'${q.choices[origIdx].replace(/'/g,"\\'")}','${correctChoice.replace(/'/g,"\\'")}')">
@@ -3546,8 +3589,7 @@ function renderReverse(q) {
     <div class="quiz-question" style="font-size:16px;">이 일본어의 뜻은?</div>
     <div class="rev-jp-card">
       ${buildJpWordSpans(q.jp, S.showRomaji, S.showHira, 'rev-jp-word', 'rev-jp-word-furi', 'rev-jp-word-text', 'rev-jp-word-row')}
-      ${S.showRomaji && q.romaji ? `<div class="rev-jp-furigana">${q.romaji}</div>` : ''}
-      ${q.reading && !S.showRomaji && !S.showHira ? `<div class="rev-jp-reading">${q.reading}</div>` : ''}
+      ${!S.showRomaji && !S.showHira && q.reading ? `<div class="rev-jp-reading">${q.reading}</div>` : ''}
       <div class="speak-hint" onclick="speakJapanese('${jpSafe}',document.getElementById('speak-rev'))">🔊 탭하여 발음 듣기</div>
       <button class="speak-btn" id="speak-rev" style="margin:8px auto 0;display:flex;" onclick="speakJapanese('${jpSafe}',this)">🔊</button>
     </div>
@@ -3617,7 +3659,7 @@ function renderArrange(q) {
     <div class="arr-speak-row">
       <div style="flex:1;">
         <div class="quiz-jp" style="font-size:14px;">${hint}</div>
-        ${S.showRomaji && q.romaji ? `<div class="quiz-jp-furigana" style="margin-top:2px;">${q.romaji}</div>` : ''}
+        ${S.showRomaji && q.romaji ? `<div class="jp-romaji-line" style="margin-top:3px;">${q.romaji}</div>` : ''}
       </div>
       <button class="speak-btn" id="speak-arr" onclick="speakJapanese('${jpSafe}',this)" title="발음 듣기">🔊</button>
     </div>
@@ -3777,7 +3819,8 @@ function selectAnswer(btn, chosen, correct) {
     S.hearts = Math.max(0, S.hearts-1);
     playSound('wrong');
     feedback.className = 'quiz-feedback wrong-fb show';
-    feedback.innerHTML = `<div class="feedback-mascot"><div class="fm-svg">${terriermonSVG('sad')}</div><div class="fm-text"><div class="fm-title w">💔 틀렸어요</div><div class="fm-ans">정답: ${correct} <button class="speak-btn" style="width:26px;height:26px;font-size:13px;display:inline-flex;vertical-align:middle;margin-left:4px;" onclick="speakJapanese('${correct.replace(/'/g,"\\'")}',this)">🔊</button></div></div></div>`;
+    const correctRomaji = S.showRomaji ? getTextRomaji(correct) : (S.showHira ? getTextHira(correct) : '');
+    feedback.innerHTML = `<div class="feedback-mascot"><div class="fm-svg">${terriermonSVG('sad')}</div><div class="fm-text"><div class="fm-title w">💔 틀렸어요</div><div class="fm-ans">정답: ${correct} <button class="speak-btn" style="width:26px;height:26px;font-size:13px;display:inline-flex;vertical-align:middle;margin-left:4px;" onclick="speakJapanese('${correct.replace(/'/g,"\\'")}',this)">🔊</button>${correctRomaji ? `<div class="fb-ans-romaji">${correctRomaji}</div>` : ''}</div></div></div>`;
     continueBtn.className = 'quiz-continue-btn red';
     addWeakItem(S.lesson.id, S.questions[S.qIndex]);
     document.getElementById('quiz-hearts-display').innerHTML = (() => {
