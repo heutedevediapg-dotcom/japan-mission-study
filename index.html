@@ -5264,6 +5264,16 @@ function loginAs(uid, name) {
   registerPushSubscription();
   // Firebase 연결 & 팀 동기화
   if(initFirebase()) {
+    // 로그인 직후 Firebase에서 이름·비밀번호 즉시 동기화 (새 기기 대응)
+    _db.ref(`team/${CU.uid}`).once('value').then(snap => {
+      const data = snap.val();
+      if(data && data.name && !/^선교대원\s*\d+\s*호$/.test(data.name)) {
+        CU.name = data.name;
+        const users = getAllUsers();
+        if(users[CU.uid]) { users[CU.uid].name = data.name; saveAllUsers(users); }
+        updateTopbarUser();
+      }
+    }).catch(() => {});
     subscribeTeam();
     subscribeNudges();
     subscribeHeartGifts();
