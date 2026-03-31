@@ -1261,6 +1261,11 @@ body{
 .choice-sub{font-size:11px;font-weight:500;color:var(--blue);letter-spacing:.04em;}
 [data-theme="dark"] .choice-sub{color:#7dd8fd;}
 
+/* 루비(furigana): 한자 위 히라가나 */
+ruby{ruby-align:center;display:inline;}
+rt{font-size:10px;font-weight:500;color:var(--blue);letter-spacing:.02em;}
+[data-theme="dark"] rt{color:#7dd8fd;}
+
 /* Rev card word tap */
 .rev-jp-word-block{display:flex;flex-direction:column;align-items:center;gap:5px;}
 .rev-jp-word-row{display:flex;flex-wrap:wrap;gap:3px;align-items:flex-end;justify-content:center;}
@@ -3578,13 +3583,37 @@ function getTextHira(text) {
   return '';
 }
 
+/* ─── 한자 포함 여부 체크 ─── */
+function hasKanji(str) {
+  return /[\u4e00-\u9fff\u3400-\u4dbf]/.test(str);
+}
+
+/* ─── WORD_DATA 토큰으로 루비(furigana) HTML 생성: 한자에만 히라가나 표시 ─── */
+function buildRubyHtml(text) {
+  if (typeof WORD_DATA !== 'undefined' && WORD_DATA[text]) {
+    return WORD_DATA[text].map(t => {
+      const surface = t[0], reading = t[1] || t[0];
+      if (hasKanji(surface)) {
+        return `<ruby>${surface}<rt>${reading}</rt></ruby>`;
+      }
+      return surface;
+    }).join('');
+  }
+  return text;
+}
+
 /* ─── 보기 버튼 HTML (Duolingo 스타일: JP 위, 로마자 아래) ─── */
 function buildChoiceHtml(text, showRomaji, showHira) {
   // 한국어 보기는 발음 표시 불필요
   const isKorean = /^[ㄱ-ㅎ가-힣\s·,!?.。、！？…\-→↔←（）()「」]+$/.test(text);
   if (isKorean || (!showRomaji && !showHira)) return text;
 
-  const sub = showRomaji ? getTextRomaji(text) : getTextHira(text);
+  if (showHira) {
+    // 한자에만 루비(furigana)로 히라가나 표시
+    return buildRubyHtml(text);
+  }
+
+  const sub = getTextRomaji(text);
   if (!sub) return text;
 
   return `<span class="choice-content"><span class="choice-jp">${text}</span><span class="choice-sub">${sub}</span></span>`;
@@ -3604,17 +3633,21 @@ function buildJpWordSpans(jp, showRomaji, showHira, wordCls, furiCls, textCls, r
       const surfSafe = surface.replace(/'/g,"\\'").replace(/"/g,'&quot;');
       const readSafe = reading.replace(/'/g,"\\'");
       const meanSafe = meaning.replace(/'/g,"\\'");
-      return `<div class="${wordCls}" onclick="showWordPopup(this,'${surfSafe}','${readSafe}','${meanSafe}')"><span class="${textCls}">${surface}</span></div>`;
+      // 히라가나 모드: 한자에만 루비 표시
+      const inner = showHira && hasKanji(surface)
+        ? `<ruby>${surface}<rt>${reading}</rt></ruby>`
+        : surface;
+      return `<div class="${wordCls}" onclick="showWordPopup(this,'${surfSafe}','${readSafe}','${meanSafe}')"><span class="${textCls}">${inner}</span></div>`;
     }).join('');
   }
 
-  // Duolingo 스타일: 로마자/히라가나 한 줄 아래
+  // 로마자: 한 줄 아래, 히라가나: 루비로 이미 표시됨 (서브라인 불필요)
   const isRevCard = rowCls === 'rev-jp-word-row';
   const blockCls = isRevCard ? 'rev-jp-word-block' : 'jp-word-block';
   const lineCls  = isRevCard ? 'rev-jp-romaji-line' : 'jp-romaji-line';
   let subLine = '';
-  if (showRomaji || showHira) {
-    const sub = showRomaji ? getTextRomaji(jp) : getTextHira(jp);
+  if (showRomaji) {
+    const sub = getTextRomaji(jp);
     if (sub) subLine = `<div class="${lineCls}">${sub}</div>`;
   }
 
