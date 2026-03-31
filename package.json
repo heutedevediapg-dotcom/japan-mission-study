@@ -10,5 +10,8 @@
   },
   "jest": {
     "testEnvironment": "node"
+  },
+  "dependencies": {
+    "kuromoji": "^0.1.2"
   }
 }
