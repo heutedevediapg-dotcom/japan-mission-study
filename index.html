@@ -7,8 +7,11 @@
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#58CC02">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="메구미링고">
+<link rel="icon" type="image/svg+xml" href="./icon.svg">
+<link rel="alternate icon" type="image/png" href="./megumi-face-192.png">
+<link rel="shortcut icon" href="./megumi-face-192.png">
 <link rel="apple-touch-icon" href="./megumi-face-192.png">
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
@@ -41,9 +44,7 @@ body{
   font-family:-apple-system,'Hiragino Kaku Gothic Pro','Yu Gothic UI','Malgun Gothic',sans-serif;
   background:var(--bg);color:var(--text);
   display:flex;flex-direction:column;height:100vh;max-height:100vh;
-  padding-top:max(env(safe-area-inset-top), 50px);
   padding-bottom:60px; /* fallback; overridden by JS syncNavPadding() */
-  padding-top:env(safe-area-inset-top);
   padding-bottom:calc(36px + env(safe-area-inset-bottom));
   transition:background .3s,color .3s;
 }
@@ -51,6 +52,43 @@ body{
 /* ── SCREENS ─────────────────────────────────── */
 .screen{display:none;flex:1;overflow-y:auto;overflow-x:hidden;flex-direction:column;}
 .screen.active{display:flex;}
+
+.splash-screen{
+  align-items:center;justify-content:center;
+  text-align:center;padding:32px 24px;
+  background:
+    radial-gradient(circle at top, rgba(88,204,2,.22), transparent 48%),
+    linear-gradient(180deg, var(--bg), var(--bg2));
+}
+.splash-mark{
+  width:96px;height:96px;border-radius:28px;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 18px;
+  background:linear-gradient(145deg, var(--green), var(--green-dk));
+  color:#fff;font-size:42px;
+  box-shadow:0 18px 40px rgba(88,204,2,.2);
+}
+.splash-title{
+  font-size:28px;font-weight:900;letter-spacing:-1px;
+  color:var(--green);
+}
+.splash-sub{
+  margin-top:8px;font-size:14px;line-height:1.6;color:var(--text2);
+}
+.splash-loader{
+  display:flex;justify-content:center;gap:8px;margin-top:22px;
+}
+.splash-loader span{
+  width:10px;height:10px;border-radius:50%;
+  background:var(--green);opacity:.28;
+  animation:splashPulse 1.1s ease-in-out infinite;
+}
+.splash-loader span:nth-child(2){animation-delay:.15s;}
+.splash-loader span:nth-child(3){animation-delay:.3s;}
+@keyframes splashPulse{
+  0%, 80%, 100% { transform:translateY(0); opacity:.28; }
+  40% { transform:translateY(-6px); opacity:1; }
+}
 
 /* 퀴즈 화면: body padding 무시하고 뷰포트 전체 점유 */
 #screen-quiz{
@@ -66,7 +104,7 @@ body{
 .topbar{
   display:flex;align-items:center;justify-content:space-between;
   padding:8px 16px 8px;
-  padding-top:max(env(safe-area-inset-top), 8px);
+  padding-top:calc(env(safe-area-inset-top) + 16px);
   background:var(--bg);
   border-bottom:1.5px solid var(--border);flex-shrink:0;
   position:sticky;top:0;z-index:10;
@@ -1321,6 +1359,7 @@ body{
   display:flex;flex-direction:column;align-items:center;
   justify-content:center;min-height:100%;
   padding:24px 20px;
+  padding-top:calc(24px + env(safe-area-inset-top));
   background:var(--bg);overflow-y:auto;
 }
 .auth-hero{text-align:center;margin-bottom:28px;}
@@ -1691,8 +1730,20 @@ body{
   </div>
 </div>
 
+<!-- ══════════════════ SPLASH SCREEN ══════════════════ -->
+<div class="screen active splash-screen" id="screen-splash">
+  <div>
+    <div class="splash-mark">🇯🇵</div>
+    <div class="splash-title">메구미링고</div>
+    <div class="splash-sub">세션과 학습 기록을 불러오는 중이에요</div>
+    <div class="splash-loader" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</div>
+
 <!-- ══════════════════ AUTH SCREEN ══════════════════ -->
-<div class="screen active" id="screen-auth" style="overflow-y:auto;">
+<div class="screen" id="screen-auth" style="overflow-y:auto;">
   <div class="auth-screen">
     <div class="auth-hero">
       <span class="auth-hero-icon">🇯🇵</span>
@@ -2379,6 +2430,47 @@ const S = {
   heartRequestedToday: '',  // 하트 요청 발송한 날짜 (당일 1회 제한)
 };
 
+const APP_BASE_PATH = (() => {
+  const path = window.location.pathname;
+  if(path.endsWith('/')) return path;
+  const lastSlash = path.lastIndexOf('/');
+  const leaf = path.slice(lastSlash + 1);
+  return leaf.includes('.') ? path.slice(0, lastSlash + 1) : `${path}/`;
+})();
+const APP_HOME_URL = new URL(APP_BASE_PATH, window.location.origin).toString();
+const APP_HOME_PATH = new URL(APP_HOME_URL).pathname;
+
+function appAssetUrl(path = '') {
+  const clean = String(path || '').replace(/^\.?\//, '');
+  return new URL(clean, APP_HOME_URL).toString();
+}
+
+function createWeekDone() {
+  return [false,false,false,false,false,false,false];
+}
+
+function asStringArray(value) {
+  return Array.isArray(value) ? value.filter(v => typeof v === 'string') : [];
+}
+
+function asPlainObject(value) {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+}
+
+function normalizeWeekDone(value) {
+  return Array.isArray(value) && value.length === 7 ? value.map(Boolean) : createWeekDone();
+}
+
+function normalizeHeartsSentToday(value) {
+  if(!value || typeof value !== 'object' || Array.isArray(value)) {
+    return { date: '', sentTo: [] };
+  }
+  return {
+    date: typeof value.date === 'string' ? value.date : '',
+    sentTo: asStringArray(value.sentTo),
+  };
+}
+
 /* ═══════════════════════════════════════════
    SCREEN NAVIGATION
 ═══════════════════════════════════════════ */
@@ -2719,8 +2811,11 @@ function goGetHeartGift() {
 /* ─── HEART GIFT (Firebase) ─── */
 function getTodayHeartsSent() {
   const today = new Date().toDateString();
-  if (S.heartsSentToday.date !== today) {
+  const sentHistory = normalizeHeartsSentToday(S.heartsSentToday);
+  if (sentHistory.date !== today) {
     S.heartsSentToday = { date: today, sentTo: [] };
+  } else {
+    S.heartsSentToday = sentHistory;
   }
   return S.heartsSentToday.sentTo;
 }
@@ -4354,6 +4449,10 @@ async function toggleNotif() {
       persistProgress();
       return;
     }
+    if(Notification.permission === 'denied') {
+      showToast('이 방식으로 다시 켤 수 없습니다', '기기 설정에서 알림을 다시 허용해주세요', 'warning');
+      return;
+    }
     const perm = await Notification.requestPermission();
     if(perm === 'granted') {
       S.notifEnabled = true;
@@ -4371,10 +4470,13 @@ async function toggleNotif() {
       scheduleNotification();
     }
   } else {
+    const shouldDisable = window.confirm('알림을 끄면 일일 공부 알림과 팀원 푸시 구독이 함께 해제됩니다.\n다시 켤 때는 기기 설정에서 알림 허용 상태를 확인해야 할 수 있습니다.\n계속할까요?');
+    if(!shouldDisable) return;
     S.notifEnabled = false;
     if(S.notifTimeout) { clearTimeout(S.notifTimeout); S.notifTimeout = null; }
     swPost({ type: 'CANCEL' });
-    showToast('🔕 알림 꺼짐', '저도 쉬어요 😴', '');
+    await unsubscribePushSubscription();
+    showToast('🔕 알림 꺼짐', '일일 알림과 푸시 구독을 해제했어요', '');
   }
   updateNotifToggleUI();
   updateNotifRowsVis();
@@ -4410,7 +4512,8 @@ let _swReg = null;
 async function registerStudySW() {
   if(!('serviceWorker' in navigator)) return;
   try {
-    _swReg = await navigator.serviceWorker.register('/terriermon-sw.js', {
+    _swReg = await navigator.serviceWorker.register(appAssetUrl('terriermon-sw.js'), {
+      scope: APP_HOME_PATH,
       updateViaCache: 'none'  // SW 파일 자체를 HTTP 캐시 없이 항상 새로 가져옴
     });
 
@@ -4474,6 +4577,47 @@ async function autoEnableNotification() {
       if(t) t.classList.add('on');
     }
   } catch(e) {}
+}
+
+async function runPwaPushStartup() {
+  if(!isStandalonePwaMode()) return false;
+  if(!_db || !CU.uid) return false;
+  if(!('Notification' in window)) return false;
+
+  const firstPwaLaunch = isFirstPwaLaunch();
+  const shouldRunSelfTest = firstPwaLaunch || !hasSuccessfulPushSelfTest();
+  if(!firstPwaLaunch && S.notifEnabled === false) return false;
+
+  try {
+    if(firstPwaLaunch && Notification.permission === 'default') {
+      const perm = await Notification.requestPermission();
+      if(perm !== 'granted') return true;
+    } else if(Notification.permission !== 'granted') {
+      return firstPwaLaunch;
+    }
+
+    S.notifEnabled = true;
+    updateNotifToggleUI();
+    updateNotifRowsVis();
+    persistProgress();
+    scheduleNotification();
+    await registerPushSubscription();
+    if(shouldRunSelfTest) {
+      const verified = await verifyPushSubscriptionAndNotifySelf();
+      if(!verified) {
+        showToast('⚠️ 푸시 등록 확인 실패', '권한 또는 구독 저장 상태를 다시 확인해주세요', 'warning');
+      } else {
+        markPushSelfTestSuccess();
+      }
+    }
+    pushMyProgress();
+    return true;
+  } catch(e) {
+    console.warn('PWA push startup failed:', e);
+    return firstPwaLaunch;
+  } finally {
+    if(firstPwaLaunch) markPwaLaunchSeen();
+  }
 }
 
 /* ─── 알림 스케줄 (SW + setTimeout 이중) ─── */
@@ -4604,7 +4748,7 @@ function fireNotification() {
       new Notification(msg.title, {
         body: msg.body,
         tag:  'mission-study-reminder',
-        icon: '/japan-mission-study/megumi-icon.jpg',
+        icon: appAssetUrl('megumi-icon.jpg'),
       });
       return;
     } catch(e) {}
@@ -5002,6 +5146,44 @@ function saveUserProgress(uid, data) {
   } catch(e){}
 }
 
+const PWA_FIRST_LAUNCH_KEY = 'missionJP_pwa_first_launch_seen';
+const PUSH_SELF_TEST_OK_KEY = 'missionJP_push_self_test_ok';
+try { localStorage.removeItem('missionJP_push_debug_logs'); } catch(e){}
+
+function isStandalonePwaMode() {
+  try {
+    const standalone = !!(window.matchMedia && (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.matchMedia('(display-mode: fullscreen)').matches
+    ));
+    return standalone ||
+      window.navigator.standalone === true ||
+      document.referrer.startsWith('android-app://');
+  } catch(e) {
+    return window.navigator && window.navigator.standalone === true;
+  }
+}
+
+function hasSeenPwaLaunch() {
+  try { return localStorage.getItem(PWA_FIRST_LAUNCH_KEY) === '1'; } catch(e){ return false; }
+}
+
+function isFirstPwaLaunch() {
+  return isStandalonePwaMode() && !hasSeenPwaLaunch();
+}
+
+function markPwaLaunchSeen() {
+  try { localStorage.setItem(PWA_FIRST_LAUNCH_KEY, '1'); } catch(e){}
+}
+
+function hasSuccessfulPushSelfTest() {
+  try { return localStorage.getItem(PUSH_SELF_TEST_OK_KEY) === '1'; } catch(e){ return false; }
+}
+
+function markPushSelfTestSuccess() {
+  try { localStorage.setItem(PUSH_SELF_TEST_OK_KEY, '1'); } catch(e){}
+}
+
 // loadUserPrefs / saveUserPrefs / applyUserPrefs — 제거됨 (스냅샷/Firebase 단일 소스 방식으로 교체)
 
 // ── Current user state ────────────────────────
@@ -5053,10 +5235,10 @@ function applyProgressSnapshot(snap) {
   const _curWeekStart = getWeekStartDate();
   const _snapWeekStart = snap.weekStartDate || '';
   S.weekDone = (_snapWeekStart === _curWeekStart)
-    ? (snap.weekDone ?? [false,false,false,false,false,false,false])
-    : [false,false,false,false,false,false,false];
+    ? normalizeWeekDone(snap.weekDone)
+    : createWeekDone();
   S.weekStartDate = _curWeekStart;
-  S.allCompleted = new Set(snap.allCompleted ?? []);
+  S.allCompleted = new Set(asStringArray(snap.allCompleted));
   S.notifEnabled = snap.notifEnabled ?? true;
   S.notifTime = snap.notifTime ?? '09:00';
   S.darkMode = snap.darkMode ?? false;
@@ -5069,17 +5251,18 @@ function applyProgressSnapshot(snap) {
     S.showHira   = snap.showPron && snap.pronMode === 'hira';
   }
   if(snap.showHira !== undefined) S.showHira = snap.showHira;
-  S.enabledCats = new Set(snap.enabledCats ?? []);
-  S.lessonStars = snap.lessonStars ?? {};
-  S.titles = new Set(snap.titles ?? []);
-  S.openedChests = new Set(snap.openedChests ?? []);
-  S.pathChests = new Set(snap.pathChests ?? []);
+  S.enabledCats = new Set(asStringArray(snap.enabledCats));
+  S.lessonStars = asPlainObject(snap.lessonStars);
+  S.titles = new Set(asStringArray(snap.titles));
+  S.openedChests = new Set(asStringArray(snap.openedChests));
+  S.pathChests = new Set(asStringArray(snap.pathChests));
   S.couponRevealed = snap.couponRevealed ?? false;
   S.gems = snap.gems ?? 0;
   S.streakShield = snap.streakShield ?? false;
   // heartsSentToday: 오늘 날짜와 일치할 때만 복원
-  if(snap.heartsSentToday && snap.heartsSentToday.date === new Date().toDateString()) {
-    S.heartsSentToday = snap.heartsSentToday;
+  const sentHistory = normalizeHeartsSentToday(snap.heartsSentToday);
+  if(sentHistory.date === new Date().toDateString()) {
+    S.heartsSentToday = sentHistory;
   }
   if(snap.heartRequestedToday === new Date().toDateString()) {
     S.heartRequestedToday = snap.heartRequestedToday;
@@ -5130,6 +5313,24 @@ function showAuthError(formId, msg) {
   el.textContent = msg; el.classList.add('show');
 }
 
+async function syncCurrentUserNameFromFirebase() {
+  if(!_db || !CU.uid) return CU.name;
+  try {
+    const snap = await _db.ref(`team/${CU.uid}`).once('value');
+    const data = snap.val() || {};
+    const users = getAllUsers();
+    const user = users[CU.uid] || { name: CU.name, pw: '', createdAt: Date.now() };
+    if(data.pw) user.pw = data.pw;
+    if(data.name && !/^선교대원\s*\d+\s*호$/.test(data.name)) {
+      user.name = data.name;
+      CU.name = data.name;
+    }
+    users[CU.uid] = user;
+    saveAllUsers(users);
+  } catch(e) {}
+  return CU.name;
+}
+
 // ── Login ─────────────────────────────────────
 function doLogin() {
   const id = document.getElementById('login-id').value.trim();
@@ -5161,7 +5362,7 @@ function doLogin() {
 }
 
 // ── Core login ───────────────────────────────
-function loginAs(uid, name) {
+async function loginAs(uid, name) {
   CU = { uid, name };
   setCurrentSession(uid);
   let saved = loadUserProgress(uid);
@@ -5250,6 +5451,8 @@ function loginAs(uid, name) {
   }
 
   // (프리퍼런스 시스템 제거됨 — 스냅샷/Firebase가 단일 소스)
+  const hasFirebase = initFirebase();
+  if(hasFirebase) await syncCurrentUserNameFromFirebase();
 
   updateTopbarUser();
   document.querySelector('.bottom-nav').style.display = 'flex';
@@ -5257,26 +5460,17 @@ function loginAs(uid, name) {
   initTTSVoice();
   goTo('home');
   renderSettings(); // 설정 UI를 최신 S 상태로 동기화
-  // 알림 기본 활성화: 처음 로그인 시 자동 권한 요청 후 활성화
-  autoEnableNotification();
+  // 설치형 PWA는 별도 startup 흐름에서 권한 요청/구독을 처리
+  if(!isStandalonePwaMode()) autoEnableNotification();
   checkMissedStudy();                          // 어제 미공부 확인
   // 웹 푸시 구독 등록 (찌르기 앱 푸시용)
-  registerPushSubscription();
+  if(!isStandalonePwaMode()) registerPushSubscription();
   // Firebase 연결 & 팀 동기화
-  if(initFirebase()) {
-    // 로그인 직후 Firebase에서 이름·비밀번호 즉시 동기화 (새 기기 대응)
-    _db.ref(`team/${CU.uid}`).once('value').then(snap => {
-      const data = snap.val();
-      if(data && data.name && !/^선교대원\s*\d+\s*호$/.test(data.name)) {
-        CU.name = data.name;
-        const users = getAllUsers();
-        if(users[CU.uid]) { users[CU.uid].name = data.name; saveAllUsers(users); }
-        updateTopbarUser();
-      }
-    }).catch(() => {});
+  if(hasFirebase) {
     subscribeTeam();
     subscribeNudges();
     subscribeHeartGifts();
+    runPwaPushStartup();
     if(saved) {
       // 로컬 데이터 있음 → 바로 Firebase에 업로드
       pushMyProgress();
@@ -5287,9 +5481,9 @@ function loginAs(uid, name) {
   }
 
   setTimeout(()=>{
-    showToast(`👋 ${name}님, 환영해요! ✝️🇯🇵`, '오늘도 함께 공부해요!', 'success');
+    showToast(`👋 ${CU.name}님, 환영해요! ✝️🇯🇵`, '오늘도 함께 공부해요!', 'success');
     if(S.todayXP === 0) {
-      showMascot('cheer', `${name.split(' ')[0]}님, 안녕하세요! 🐾`, '오늘도 메구미가 응원할게요!', 'wiggle', 4000);
+      showMascot('cheer', `${CU.name.split(' ')[0]}님, 안녕하세요! 🐾`, '오늘도 메구미가 응원할게요!', 'wiggle', 4000);
     }
   }, 400);
 }
@@ -5556,18 +5750,24 @@ function restoreFromFirebase() {
       const lastStudiedDate = data.lastStudied || lastStreakDate || '';
       S.todayXP = (lastStudiedDate === today) ? (data.todayXP || 0) : 0;
       // 학습 진행 데이터 복원 (빈 배열은 무시 → 기존 값 보호)
-      if(data.allCompleted  && data.allCompleted.length  > 0) S.allCompleted  = new Set(data.allCompleted);
-      if(data.lessonStars   && Object.keys(data.lessonStars).length > 0) S.lessonStars = data.lessonStars;
-      if(data.titles        && data.titles.length        > 0) S.titles        = new Set(data.titles);
-      if(data.openedChests  && data.openedChests.length  > 0) S.openedChests  = new Set(data.openedChests);
-      if(data.pathChests    && data.pathChests.length    > 0) S.pathChests    = new Set(data.pathChests);
+      const allCompleted = asStringArray(data.allCompleted);
+      const lessonStars = asPlainObject(data.lessonStars);
+      const titles = asStringArray(data.titles);
+      const openedChests = asStringArray(data.openedChests);
+      const pathChests = asStringArray(data.pathChests);
+      if(allCompleted.length > 0) S.allCompleted = new Set(allCompleted);
+      if(Object.keys(lessonStars).length > 0) S.lessonStars = lessonStars;
+      if(titles.length > 0) S.titles = new Set(titles);
+      if(openedChests.length > 0) S.openedChests = new Set(openedChests);
+      if(pathChests.length > 0) S.pathChests = new Set(pathChests);
       const _fbWeekStart = data.weekStartDate || '';
       const _curWeekStart = getWeekStartDate();
       S.weekDone = (_fbWeekStart === _curWeekStart && data.weekDone)
-        ? data.weekDone
-        : [false,false,false,false,false,false,false];
+        ? normalizeWeekDone(data.weekDone)
+        : createWeekDone();
       S.weekStartDate = _curWeekStart;
-      if(data.enabledCats   && data.enabledCats.length   > 0) S.enabledCats   = new Set(data.enabledCats);
+      const enabledCats = asStringArray(data.enabledCats);
+      if(enabledCats.length > 0) S.enabledCats = new Set(enabledCats);
       if(data.hearts          !== undefined) S.hearts          = data.hearts;
       if(data.couponRevealed  !== undefined) S.couponRevealed  = data.couponRevealed;
       if(data.lastHeartRefillDate) S.lastHeartRefillDate = data.lastHeartRefillDate;
@@ -5589,24 +5789,25 @@ function restoreFromFirebase() {
       }
       if(data.showHira !== undefined) S.showHira = data.showHira;
       // heartsSentToday: 오늘 날짜와 일치할 때만 복원 (날짜 지난 건 무시)
-      if(data.heartsSentToday && data.heartsSentToday.date === new Date().toDateString()) {
-        S.heartsSentToday = data.heartsSentToday;
+      const sentHistory = normalizeHeartsSentToday(data.heartsSentToday);
+      if(sentHistory.date === new Date().toDateString()) {
+        S.heartsSentToday = sentHistory;
       }
       if(data.heartRequestedToday === new Date().toDateString()) {
         S.heartRequestedToday = data.heartRequestedToday;
       }
       if(data.pw || data.name) {
         const users = getAllUsers();
-        if(users[CU.uid]) {
-          if(data.pw) users[CU.uid].pw = data.pw;
-          // Firebase에 저장된 이름이 기본값이 아닌 경우 → 로컬+CU 이름 복원
-          if(data.name && !/^선교대원\s*\d+\s*호$/.test(data.name)) {
-            users[CU.uid].name = data.name;
-            CU.name = data.name;
-            updateTopbarUser();
-          }
-          saveAllUsers(users);
+        const user = users[CU.uid] || { name: CU.name, pw: '', createdAt: Date.now() };
+        if(data.pw) user.pw = data.pw;
+        // Firebase에 저장된 이름이 기본값이 아닌 경우 → 로컬+CU 이름 복원
+        if(data.name && !/^선교대원\s*\d+\s*호$/.test(data.name)) {
+          user.name = data.name;
+          CU.name = data.name;
+          updateTopbarUser();
         }
+        users[CU.uid] = user;
+        saveAllUsers(users);
       }
       persistProgress();  // Firebase 복원 결과를 localStorage에 저장
       renderHome();       // 화면 업데이트
@@ -5673,9 +5874,75 @@ async function registerPushSubscription() {
       });
     }
     // Firebase에 내 구독 저장
-    _db.ref(`push_subs/${CU.uid}`).set(JSON.parse(JSON.stringify(sub)));
+    await _db.ref(`push_subs/${CU.uid}`).set(JSON.parse(JSON.stringify(sub)));
+    return sub;
   } catch(e) {
     console.warn('Push subscription failed:', e);
+    return null;
+  }
+}
+
+async function unsubscribePushSubscription() {
+  try {
+    if('serviceWorker' in navigator && 'PushManager' in window) {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if(sub) await sub.unsubscribe();
+    }
+  } catch(e) {
+    console.warn('Push unsubscribe failed:', e);
+  }
+
+  if(_db && CU.uid) {
+    try {
+      await _db.ref(`push_subs/${CU.uid}`).remove();
+    } catch(e) {
+      console.warn('Push subscription removal failed:', e);
+    }
+  }
+}
+
+async function verifyPushSubscriptionAndNotifySelf() {
+  if(!('Notification' in window) || Notification.permission !== 'granted') return false;
+  if(!_db || !CU.uid) return false;
+
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if(!sub) return false;
+
+    const plainSub = JSON.parse(JSON.stringify(sub));
+    const subRef = _db.ref(`push_subs/${CU.uid}`);
+    await subRef.set(plainSub);
+
+    const savedSnap = await subRef.once('value');
+    const savedSub = savedSnap.val();
+    if(!savedSub || savedSub.endpoint !== plainSub.endpoint) return false;
+
+    await _db.ref(`nudges/${CU.uid}`).push({
+      from: 'system',
+      fromName: '메구미링고',
+      message: '푸시 알림 구독이 완료되었습니다. 테스트 푸시를 보냈어요.',
+      ts: Date.now(),
+      type: 'pushSubscriptionVerified',
+    });
+
+    const res = await fetch(PUSH_SERVER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        subscription: savedSub,
+        title: '🔔 구독 완료',
+        body: '푸시 알림 구독이 정상 등록되었습니다.',
+        icon: appAssetUrl('megumi-icon.jpg'),
+        tag: 'push-subscription-verified',
+        data: { url: APP_HOME_URL },
+      }),
+    });
+    return !!res.ok;
+  } catch(e) {
+    console.warn('Push subscription verify failed:', e);
+    return false;
   }
 }
 
@@ -5704,7 +5971,7 @@ async function sendNudge(targetUid, targetName, message) {
           subscription: sub,
           title: `🐾 ${CU.name}${josa(CU.name,'이가')} 찌릅니다!`,
           body: message,
-          icon: '/japan-mission-study/megumi-icon.jpg',
+          icon: appAssetUrl('megumi-icon.jpg'),
         }),
       }).catch(err => console.warn('푸시 전송 실패:', err));
     } else {
@@ -5971,7 +6238,7 @@ async function requestHeart() {
             subscription: sub,
             title: `❤️ ${CU.name}${josa(CU.name,'이가')} 하트를 요청해요!`,
             body: `팀원 화면에서 ${CU.name}님께 하트를 선물해주세요 🙏`,
-            icon: '/japan-mission-study/megumi-icon.jpg',
+            icon: appAssetUrl('megumi-icon.jpg'),
           }),
         }).catch(() => {});
         sentCount++;
@@ -6091,7 +6358,7 @@ function init() {
       return;
     }
   }
-  // Show auth screen
+  goTo('auth');
 }
 
 init();

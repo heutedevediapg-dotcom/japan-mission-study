@@ -5,7 +5,8 @@
   "theme_color": "#58CC02",
   "background_color": "#58CC02",
   "display": "standalone",
-  "start_url": "/japan-mission-study/",
+  "start_url": "./",
+  "scope": "./",
   "icons": [
     {
       "src": "megumi-face-192.png",

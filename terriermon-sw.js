@@ -1,12 +1,24 @@
-const CACHE_NAME = 'mission-jp-v14';
+const APP_SCOPE_URL = new URL(self.registration.scope);
+const APP_SCOPE_PATH = APP_SCOPE_URL.pathname;
+
+function appAssetUrl(path = '') {
+  const clean = String(path || '').replace(/^\.?\//, '');
+  return new URL(clean, self.registration.scope).toString();
+}
+
+function appAssetPath(path = '') {
+  return new URL(path, self.registration.scope).pathname;
+}
+
+const CACHE_NAME = 'mission-jp-v16';
 const CACHE_FILES = [
-  '/',
-  '/japan-mission-study/',
-  '/japan-mission-study/index.html',
-  '/japan-mission-study/manifest.json',
-  '/japan-mission-study/megumi-face-192.png',
-  '/japan-mission-study/megumi-face-512.png',
-  '/japan-mission-study/megumi-icon.jpg',
+  APP_SCOPE_PATH,
+  appAssetPath('index.html'),
+  appAssetPath('manifest.json'),
+  appAssetPath('megumi-face-192.png'),
+  appAssetPath('megumi-face-512.png'),
+  appAssetPath('megumi-icon.jpg'),
+  appAssetPath('icon.svg'),
 ];
 
 self.addEventListener('install', evt => {
@@ -93,10 +105,10 @@ self.addEventListener('message', evt => {
       body,
       tag:      'mission-study-reminder',
       renotify: true,
-      icon:     '/japan-mission-study/megumi-icon.jpg',
-      badge:    '/japan-mission-study/megumi-icon.jpg',
+      icon:     appAssetUrl('megumi-icon.jpg'),
+      badge:    appAssetUrl('megumi-icon.jpg'),
       vibrate:  [200, 100, 200],
-      data:     { url: '/japan-mission-study/' },
+      data:     { url: self.registration.scope },
       actions:  [
         { action: 'open',  title: '📚 공부하러 가기' },
         { action: 'later', title: '⏰ 나중에 할게요' }
@@ -210,10 +222,10 @@ function fireNotif() {
     body:      msg.body,
     tag:       'mission-study-reminder',
     renotify:  true,
-    icon:      '/japan-mission-study/megumi-icon.jpg',
-    badge:     '/japan-mission-study/megumi-icon.jpg',
+    icon:      appAssetUrl('megumi-icon.jpg'),
+    badge:     appAssetUrl('megumi-icon.jpg'),
     vibrate:   [200, 100, 200],
-    data:      { url: '/japan-mission-study/' },
+    data:      { url: self.registration.scope },
     actions: [
       { action: 'open',  title: '📚 공부하러 가기' },
       { action: 'later', title: '⏰ 나중에 할게요' }
@@ -228,13 +240,13 @@ self.addEventListener('notificationclick', evt => {
 
   const targetUrl = (evt.notification.data && evt.notification.data.url)
     ? evt.notification.data.url
-    : '/japan-mission-study/';
+    : self.registration.scope;
 
   evt.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
       // 이미 열린 앱 탭이 있으면 포커스
       for(const c of list) {
-        if(c.url.includes('/japan-mission-study') && 'focus' in c) {
+        if(c.url.startsWith(self.registration.scope) && 'focus' in c) {
           return c.focus();
         }
       }
@@ -256,12 +268,12 @@ self.addEventListener('push', evt => {
   // payload의 actions / data.url을 그대로 사용 (서버에서 지정한 내용 유지)
   const notifOptions = {
     body:     data.body    || '메구미가 기다리고 있어요 🐾',
-    icon:     data.icon    || '/japan-mission-study/megumi-icon.jpg',
-    badge:    data.badge   || '/japan-mission-study/megumi-icon.jpg',
+    icon:     data.icon    || appAssetUrl('megumi-icon.jpg'),
+    badge:    data.badge   || appAssetUrl('megumi-icon.jpg'),
     tag:      data.tag     || 'mission-push',
     renotify: true,
     vibrate:  [200, 100, 200],
-    data:     data.data    || { url: '/japan-mission-study/' },
+    data:     data.data    || { url: self.registration.scope },
     actions:  data.actions || [
       { action: 'open',  title: '📚 공부하러 가기' },
       { action: 'later', title: '⏰ 나중에 할게요' }

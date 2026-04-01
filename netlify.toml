@@ -14,5 +14,5 @@
 
 [[redirects]]
   from = "/*"
-  to = "/japan_mission_study.html"
+  to = "/index.html"
   status = 200
